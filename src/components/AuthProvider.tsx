@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string, email?: string) => {
     const userEmail = email || '';
-    const isAdminCandidate = userEmail === 'pdg@dbs-ban.ci' || userEmail.toLowerCase().includes('mcveh225');
+    const isAdminCandidate = userEmail === 'pdg@dbs-ban.ci' || userEmail.toLowerCase().includes('mcveh225@gmail.com');
     
     console.log('AuthProvider: Fetching profile for:', userId, 'Email:', userEmail, 'IsAdminCandidate:', isAdminCandidate);
     
@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const fallbackUser: UserProfile = {
           id: userId,
           email: userEmail,
-          fullName: isAdminCandidate ? 'Administrateur' : 'Collaborateur',
+          fullName: isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0],
           role: isAdminCandidate ? UserRole.PDG : UserRole.CHAUFFEUR,
         };
         
@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const dbUser: UserProfile = {
           id: profile.id,
           email: profile.email || userEmail,
-          fullName: profile.full_name || (isAdminCandidate ? 'Administrateur' : 'Collaborateur'),
+          fullName: profile.full_name || (isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0]),
           role: finalRole,
           gareId: profile.gare_id,
           avatarUrl: profile.avatar_url,
@@ -160,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const fallbackUser: UserProfile = {
         id: userId,
         email: userEmail,
-        fullName: isAdminCandidate ? 'Administrateur' : 'Collaborateur',
+        fullName: isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0],
         role: isAdminCandidate ? UserRole.PDG : UserRole.CHAUFFEUR,
       };
       

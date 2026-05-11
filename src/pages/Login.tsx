@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bus, Lock, Mail, Users, ShieldAlert } from 'lucide-react';
+import { Bus, Lock, Mail, Users, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -20,33 +21,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // For development/demo purposes, we allow a bypass or a specific test account
-      // In production, users provide real credentials
+      // In production, users provide real credentials via Supabase Auth
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // Mode démo pour le Super Administrateur (PDG)
-        if (email === 'pdg@dbs-ban.ci' && password === 'pdgdbs123') {
-          const demoUser = {
-            id: 'demo-pdg-uuid',
-            email: 'pdg@dbs-ban.ci',
-            fullName: 'Super Administrateur',
-            role: 'PDG'
-          };
-          localStorage.setItem('dbs_demo_user', JSON.stringify(demoUser));
-          toast.success('Mode démo activé (Super Admin)');
-          // Forcer le rechargement pour que AuthProvider détecte le mode démo
-          window.location.href = '/';
-          return;
-        } else if (email.includes('admin') || email === 'mcveh225@gmail.com') {
-          toast.success('Mode démo activé');
-          navigate('/');
-        } else {
-          toast.error('Erreur de connexion: ' + error.message);
-        }
+        toast.error('Erreur de connexion: ' + error.message);
       } else {
         toast.success('Connexion réussie');
         navigate('/');
@@ -110,12 +92,23 @@ export default function LoginPage() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input 
                     id="password" 
-                    type="password" 
-                    className="pl-10"
+                    type={showPassword ? "text" : "password"} 
+                    className="pl-10 pr-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required 
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </CardContent>

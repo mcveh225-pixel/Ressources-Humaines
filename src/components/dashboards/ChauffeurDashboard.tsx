@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Bus, 
@@ -17,12 +18,14 @@ import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 export function ChauffeurDashboard() {
+  const { user } = useAuth();
+  
   return (
     <div className="space-y-8 pb-12">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Espace Chauffeur</h1>
-          <p className="text-muted-foreground mt-2">Bonjour, <span className="font-bold text-primary">Kouassi K.</span> • DBS-001</p>
+          <p className="text-muted-foreground mt-2">Bonjour, <span className="font-bold text-primary">{user?.fullName || 'Utilisateur'}</span> {user?.id && `• ${user.id.slice(0, 7)}`}</p>
         </div>
         <Badge className="bg-emerald-500 text-white border-none py-1.5 px-4 shadow-sm animate-pulse">En Service</Badge>
       </div>
