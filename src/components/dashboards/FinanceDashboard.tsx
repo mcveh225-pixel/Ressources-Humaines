@@ -277,6 +277,66 @@ interface ServiceBilanCardProps {
   color: 'emerald' | 'blue' | 'amber';
 }
 
+const RecentRecettesList = ({ refreshRecent, formatFCFA }: { refreshRecent: number, formatFCFA: (n: number) => string }) => {
+  const [recentRecettes, setRecentRecettes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecent = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('recettes')
+          .select(`
+            *,
+            gares(name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+        setRecentRecettes(data || []);
+      } catch (error) {
+        console.error('Error fetching recent recettes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRecent();
+  }, [refreshRecent]);
+
+  if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600" /></div>;
+  if (recentRecettes.length === 0) return <div className="p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Aucune recette enregistrée</div>;
+
+  return (
+    <div className="divide-y divide-slate-50">
+      {recentRecettes.map((recette) => (
+        <div key={recette.id} className="p-6 flex items-center justify-between hover:bg-slate-50/80 transition-all group relative overflow-hidden">
+          <div className="flex items-center gap-5">
+            <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+              <ArrowUpRight className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="font-black text-slate-900 capitalize">{recette.service} - {recette.gares?.name || recette.gare_id}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <Badge variant="outline" className="bg-emerald-50/50 text-emerald-600 border-none px-2 h-4 text-[8px] font-black tracking-widest">{recette.type}</Badge>
+                <span className="text-[10px] text-slate-300">•</span>
+                <span className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">{new Date(recette.date).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-black text-emerald-600">+{formatFCFA(recette.amount)}</p>
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-none px-2 h-5 text-[9px] font-black tracking-widest flex items-center gap-1 mt-1 ml-auto">
+              <CheckCircle2 className="h-2.5 w-2.5" /> {recette.validation_status}
+            </Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export function FinanceDashboard() {
   const [searchParams] = useSearchParams();
   const sub = searchParams.get('sub') || 'vue-generale';
@@ -528,67 +588,6 @@ export function FinanceDashboard() {
     }
   };
 
-  const RecentRecettesList = () => {
-    const [recentRecettes, setRecentRecettes] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-      fetchRecent();
-    }, [refreshRecent]);
-
-    const fetchRecent = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('recettes')
-          .select(`
-            *,
-            gares(name)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (error) throw error;
-        setRecentRecettes(data || []);
-      } catch (error) {
-        console.error('Error fetching recent recettes:', error);
-      } finally {
-        setIsLoading(true); // Wait, should be false
-        setIsLoading(false);
-      }
-    };
-
-    if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600" /></div>;
-    if (recentRecettes.length === 0) return <div className="p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Aucune recette enregistrée</div>;
-
-    return (
-      <div className="divide-y divide-slate-50">
-        {recentRecettes.map((recette) => (
-          <div key={recette.id} className="p-6 flex items-center justify-between hover:bg-slate-50/80 transition-all group relative overflow-hidden">
-            <div className="flex items-center gap-5">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
-                <ArrowUpRight className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="font-black text-slate-900 capitalize">{recette.service} - {recette.gares?.name || recette.gare_id}</p>
-                <div className="flex items-center gap-3 mt-1">
-                  <Badge variant="outline" className="bg-emerald-50/50 text-emerald-600 border-none px-2 h-4 text-[8px] font-black tracking-widest">{recette.type}</Badge>
-                  <span className="text-[10px] text-slate-300">•</span>
-                  <span className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">{new Date(recette.date).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-black text-emerald-600">+{formatFCFA(recette.amount)}</p>
-              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-none px-2 h-5 text-[9px] font-black tracking-widest flex items-center gap-1 mt-1 ml-auto">
-                <CheckCircle2 className="h-2.5 w-2.5" /> {recette.validation_status}
-              </Badge>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   const formatFCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
   };
@@ -598,31 +597,31 @@ export function FinanceDashboard() {
   );
 
   return (
-    <div className="w-full bg-[#F8FAFC]">
-      <main className="flex-1 overflow-y-auto pb-20 custom-scrollbar relative">
-        <div className="max-w-6xl mx-auto p-8 space-y-8">
+    <div className="w-full">
+      <main className="flex-1 overflow-y-auto pb-24 custom-scrollbar relative">
+        <div className="max-w-7xl mx-auto space-y-10">
           {/* Header de Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded tracking-widest">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-[10px] font-black uppercase text-primary bg-primary/5 px-3 py-1 rounded-full tracking-[0.2em]">
                   {menuConfig.find(m => m.id === activeSection)?.label || 'Dashboard'}
                 </span>
                 <ChevronRight className="h-3 w-3 text-slate-300" />
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] italic">
                   {menuConfig.find(m => m.id === activeSection)?.subItems.find(s => s.id === activeSubSection)?.label || 'Vue'}
                 </span>
               </div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                {activeSubSection === 'vue-generale' ? 'TABLEAU DE BORD' : activeSubSection.replace(/-/g, ' ').toUpperCase()}
+              <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4 uppercase">
+                {activeSubSection === 'vue-generale' ? 'TABLEAU DE BORD' : activeSubSection.replace(/-/g, ' ')}
               </h1>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="rounded-xl border-slate-200 text-slate-600 font-bold px-4 h-10 text-[10px] uppercase tracking-widest">
+            <div className="flex items-center gap-4">
+              <Button variant="outline" className="rounded-2xl border-slate-200 bg-white text-slate-600 font-black px-6 h-12 text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
                 <Filter className="h-4 w-4 mr-2" /> Filtres
               </Button>
-              <Button className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 h-10 text-[10px] uppercase tracking-widest shadow-lg shadow-slate-200">
+              <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black px-6 h-12 text-[10px] uppercase tracking-widest shadow-xl shadow-slate-200 transition-all">
                 <Download className="h-4 w-4 mr-2" /> Exporter
               </Button>
             </div>
@@ -679,7 +678,7 @@ export function FinanceDashboard() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-0">
-                        <RecentRecettesList />
+                        <RecentRecettesList refreshRecent={refreshRecent} formatFCFA={formatFCFA} />
                       </CardContent>
                     </Card>
 
@@ -899,27 +898,31 @@ function StatCard({ title, amount, trend, icon, color, subtitle }: {
   subtitle: string
 }) {
   const colorClasses = {
-    emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-500/10',
-    blue: 'bg-blue-50 text-blue-600 ring-blue-500/10',
-    indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-500/10'
+    emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-500/10 hover:bg-emerald-600 hover:text-white',
+    blue: 'bg-blue-50 text-blue-600 ring-blue-500/10 hover:bg-blue-600 hover:text-white',
+    indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-500/10 hover:bg-indigo-600 hover:text-white'
   };
 
   return (
-    <Card className="border-none shadow-sm rounded-[2.5rem] p-8 bg-white group hover:shadow-xl transition-all border border-transparent hover:border-slate-100">
-      <div className="flex justify-between items-start mb-6">
-        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center ring-1 ring-inset", colorClasses[color])}>
+    <Card className="border-none shadow-xl shadow-slate-200/50 rounded-[2.5rem] p-8 bg-white group hover:scale-[1.02] transition-all border border-transparent hover:border-slate-100">
+      <div className="flex justify-between items-start mb-8">
+        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center ring-1 ring-inset transition-colors", colorClasses[color])}>
           {icon}
         </div>
-        <Badge className={cn("border-none h-6 px-2 rounded-lg text-[10px] font-black tracking-widest uppercase", colorClasses[color])}>
+        <Badge className={cn("border-none h-6 px-2 rounded-lg text-[10px] font-black tracking-widest uppercase", 
+          color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : color === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-indigo-50 text-indigo-600'
+        )}>
           {trend}
         </Badge>
       </div>
       <div>
         <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">{title}</p>
-        <p className="text-2xl font-black text-slate-900 mt-1 tracking-tight truncate">
-          {amount.toLocaleString('fr-FR')} FCFA
+        <p className="text-3xl font-black text-slate-900 mt-2 tracking-tighter truncate">
+          {amount.toLocaleString('fr-FR')} <span className="text-xs text-slate-300">FCFA</span>
         </p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 tracking-widest">{subtitle}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase mt-4 tracking-widest flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-slate-200" /> {subtitle}
+        </p>
       </div>
     </Card>
   );
@@ -942,34 +945,34 @@ function ServiceBilanCard({ title, icon, daily, weekly, monthly, color }: {
   const formatM = (val: number) => new Intl.NumberFormat('fr-FR').format(val) + ' F';
 
   return (
-    <Card className="border-none shadow-sm rounded-[2.5rem] p-8 bg-white group border border-transparent hover:border-slate-100 transition-all overflow-hidden relative">
-      <div className={cn("absolute -top-12 -right-12 h-32 w-32 rounded-full opacity-5 transition-transform group-hover:scale-150", 
+    <Card className="border-none shadow-xl shadow-slate-200/50 rounded-[2.5rem] p-10 bg-white group border border-transparent hover:border-slate-100 transition-all overflow-hidden relative">
+      <div className={cn("absolute -top-12 -right-12 h-40 w-40 rounded-full opacity-5 transition-transform group-hover:scale-150", 
         color === 'emerald' ? 'bg-emerald-500' : color === 'blue' ? 'bg-blue-500' : 'bg-amber-500'
       )} />
       
-      <div className="flex items-center gap-4 mb-8">
-        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center ring-1", colorClasses[color])}>
+      <div className="flex items-center gap-5 mb-10">
+        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center ring-1", colorClasses[color])}>
           {icon}
         </div>
-        <h3 className="font-black text-slate-900 uppercase tracking-tight">{title}</h3>
+        <h3 className="font-black text-xl text-slate-900 uppercase tracking-tighter">{title}</h3>
       </div>
 
-      <div className="space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-50 pb-3">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Journalier</p>
-          <p className="text-lg font-black text-slate-900">{formatM(daily)}</p>
+          <p className="text-xl font-black text-slate-900">{formatM(daily)}</p>
         </div>
-        <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+        <div className="flex items-center justify-between border-b border-slate-50 pb-3">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hebdo</p>
-          <p className="text-lg font-black text-slate-900">{formatM(weekly)}</p>
+          <p className="text-xl font-black text-slate-900">{formatM(weekly)}</p>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mensuel</p>
-          <p className="text-lg font-black text-slate-900">{formatM(monthly)}</p>
+          <p className="text-xl font-black text-slate-900">{formatM(monthly)}</p>
         </div>
       </div>
       
-      <Button className={cn("w-full mt-8 rounded-xl font-black uppercase text-[10px] tracking-widest h-11 border-none", 
+      <Button className={cn("w-full mt-10 rounded-2xl font-black uppercase text-[10px] tracking-widest h-14 border-none transition-all hover:scale-[0.98]", 
         color === 'emerald' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 
         color === 'blue' ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 
         'bg-amber-50 text-amber-700 hover:bg-amber-100'

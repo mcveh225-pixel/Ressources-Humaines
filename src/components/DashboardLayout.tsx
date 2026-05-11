@@ -6,6 +6,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
+import { Logo } from './Logo';
+
 export function DashboardLayout() {
   const { session, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -32,29 +34,32 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50/50">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <Sidebar className="hidden lg:block w-64 shrink-0 shadow-sm" />
+      <Sidebar className="hidden lg:block w-72 shrink-0 border-r border-sidebar-border" />
 
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden flex items-center h-16 px-4 border-b bg-card">
+        <header className="lg:hidden flex items-center h-16 px-4 border-b bg-sidebar text-sidebar-foreground">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden text-primary">
+              <Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
+            <SheetContent side="left" className="p-0 w-72 border-r-0">
               <Sidebar className="w-full" />
             </SheetContent>
           </Sheet>
-          <div className="ml-4 font-bold text-xl text-primary">DBS-BAN</div>
+          <div className="ml-4 flex items-center gap-2">
+            <Logo size="sm" showText={false} />
+            <span className="font-black text-lg tracking-tighter">DBS-BAN</span>
+          </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
-          <div className="max-w-7xl mx-auto space-y-8 pb-20">
+        <main className="flex-1 overflow-y-auto p-4 md:p-10">
+          <div className="max-w-7xl mx-auto space-y-10 pb-24">
             <Outlet />
           </div>
         </main>

@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
     title: 'Tableau de Bord',
     href: '/',
     icon: LayoutDashboard,
-    roles: [UserRole.PDG, UserRole.DG, UserRole.DRH, UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.CHAUFFEUR],
+    roles: [UserRole.PDG, UserRole.DG, UserRole.DRH, UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.CHAUFFEUR, UserRole.POMPISTE],
   },
   {
     title: 'Tableau de Bord',
@@ -204,7 +204,7 @@ const navItems: NavItem[] = [
     title: 'Gestion de Gare',
     href: '/gare',
     icon: MapPin,
-    roles: [UserRole.CHEF_DE_GARE, UserRole.PDG],
+    roles: [UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.PDG],
   },
   {
     title: 'Voyages',
@@ -216,15 +216,17 @@ const navItems: NavItem[] = [
     title: 'Absences/Retards',
     href: '/absences',
     icon: Clock,
-    roles: [UserRole.PDG, UserRole.DG, UserRole.CHEF_DE_GARE],
+    roles: [UserRole.PDG, UserRole.DG, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT],
   },
   {
     title: 'Maintenance',
     href: '/maintenance',
     icon: Settings,
-    roles: [UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.PDG],
+    roles: [UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.PDG],
   }
 ];
+
+import { Logo } from './Logo';
 
 export function Sidebar({ className }: { className?: string }) {
   const { user, signOut } = useAuth();
@@ -252,14 +254,12 @@ export function Sidebar({ className }: { className?: string }) {
   }, {} as Record<string, NavItem[]>);
 
   return (
-    <div className={cn("flex flex-col h-full border-r bg-card overflow-hidden", className)}>
-      <div className="px-6 py-8 flex items-center gap-3 shrink-0">
-        <div className="bg-slate-900 p-2 rounded-2xl shadow-lg shadow-slate-200">
-          <Bus className="h-6 w-6 text-white" />
-        </div>
+    <div className={cn("flex flex-col h-full border-r bg-sidebar text-sidebar-foreground overflow-hidden", className)}>
+      <div className="px-6 py-10 flex items-center gap-4 shrink-0 border-b border-sidebar-border/50">
+        <Logo size="md" showText={false} className="shadow-2xl shadow-primary/20" />
         <div>
-          <h2 className="text-lg font-black tracking-tight text-slate-900 leading-none">DBS-BAN</h2>
-          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{user?.role?.replace(/_/g, ' ')}</p>
+          <h2 className="text-xl font-black tracking-tighter text-sidebar-foreground leading-none">DBS-BAN</h2>
+          <p className="text-[10px] font-black text-sidebar-foreground/40 mt-1.5 uppercase tracking-[0.2em]">{user?.role?.replace(/_/g, ' ')}</p>
         </div>
       </div>
       
@@ -268,7 +268,7 @@ export function Sidebar({ className }: { className?: string }) {
           {Object.entries(sections).map(([sectionName, items]) => (
             <div key={sectionName} className="space-y-2">
               {sectionName !== 'MENU' && (
-                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-muted-foreground/50 uppercase">
+                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-sidebar-foreground/40 uppercase">
                   {sectionName}
                 </p>
               )}
@@ -287,14 +287,14 @@ export function Sidebar({ className }: { className?: string }) {
                             className={cn(
                               "w-full flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all",
                               isActive 
-                                ? "bg-slate-100 text-slate-900" 
-                                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                             )}
                           >
                             <div className="flex items-center gap-3">
                               <div className={cn(
                                 "p-2 rounded-xl transition-colors",
-                                isActive ? "bg-white shadow-sm" : "bg-transparent group-hover:bg-white/50"
+                                isActive ? "bg-sidebar-primary/20 text-sidebar-primary" : "bg-transparent group-hover:bg-white/5"
                               )}>
                                 <item.icon className="h-4 w-4" />
                               </div>
@@ -312,13 +312,13 @@ export function Sidebar({ className }: { className?: string }) {
                             className={({ isActive: isLinkActive }) => cn(
                               "flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all group",
                               isLinkActive 
-                                ? "bg-slate-100 text-slate-900" 
-                                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                             )}
                           >
                             <div className={cn(
                               "p-2 rounded-xl transition-colors",
-                              isActive ? "bg-white shadow-sm" : "bg-transparent group-hover:bg-white/50"
+                              isActive ? "bg-sidebar-primary/20 text-sidebar-primary" : "bg-transparent group-hover:bg-white/5"
                             )}>
                               <item.icon className="h-4 w-4" />
                             </div>
@@ -333,7 +333,7 @@ export function Sidebar({ className }: { className?: string }) {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden space-y-1 ml-10 border-l-2 border-slate-50 pl-4 py-1"
+                            className="overflow-hidden space-y-1 ml-10 border-l border-sidebar-accent/30 pl-4 py-1"
                           >
                             {item.subItems!.map((sub) => {
                               const isSubActive = location.search.includes(sub.href.split('?')[1]);
@@ -344,8 +344,8 @@ export function Sidebar({ className }: { className?: string }) {
                                   className={cn(
                                     "block py-2 px-3 text-xs font-bold transition-all rounded-lg",
                                     isSubActive
-                                      ? "text-slate-900 bg-slate-50 font-black"
-                                      : "text-slate-400 hover:text-slate-900 hover:bg-slate-50/50"
+                                      ? "text-sidebar-foreground bg-sidebar-accent/30 font-black"
+                                      : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
                                   )}
                                 >
                                   {sub.title}
@@ -364,10 +364,10 @@ export function Sidebar({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="p-4 border-t bg-card shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="p-4 border-t border-sidebar-border bg-sidebar/50 shrink-0">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl h-11"
+          className="w-full justify-start text-destructive hover:text-white hover:bg-destructive rounded-xl h-11 transition-all"
           onClick={() => signOut().then(() => navigate('/login'))}
         >
           <LogOut className="mr-2 h-4 w-4" />

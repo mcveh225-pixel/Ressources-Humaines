@@ -223,7 +223,15 @@ INSERT INTO public.gares (id, name, location) VALUES
 ('duekoue', 'Duékoué', 'Duékoué'),
 ('bangolo', 'Bangolo', 'Bangolo'),
 ('man', 'Man', 'Man'),
-('touba', 'Touba', 'Touba')
+('sangouine', 'Sangouiné', 'Sangouiné'),
+('mahapleu', 'Mahapleu', 'Mahapleu'),
+('danane', 'Danané', 'Danané'),
+('zouanhounien', 'Zouan-Hounien', 'Zouan-Hounien'),
+('binhouye', 'Bin-Houyé', 'Bin-Houyé'),
+('touba', 'Touba', 'Touba'),
+('biankouman', 'Biankouman', 'Biankouman'),
+('facobly', 'Facobly', 'Facobly'),
+('san-pedro', 'San Pedro', 'San Pedro')
 ON CONFLICT (id) DO NOTHING;
 
 -- 13. Insertion des Administrateurs par défaut (si nécessaire)

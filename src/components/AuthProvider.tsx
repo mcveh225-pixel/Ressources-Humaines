@@ -86,7 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (e.includes('finan') || e.includes('daf')) return UserRole.DAF;
       if (e.includes('compt')) return UserRole.COMPTABLE;
       if (e.includes('tech')) return UserRole.SERVICE_TECHNIQUE;
+      if (e.includes('adjoint')) return UserRole.CHEF_DE_GARE_ADJOINT;
       if (e.includes('gare')) return UserRole.CHEF_DE_GARE;
+      if (e.includes('pompiste')) return UserRole.POMPISTE;
       if (e.includes('chauf')) return UserRole.CHAUFFEUR;
       if (e.includes('mcveh225')) return UserRole.PDG;
       return UserRole.CHAUFFEUR;

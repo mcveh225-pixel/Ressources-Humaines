@@ -95,14 +95,16 @@ interface DRHDashboardProps {
 const allGaresList = GARES;
 
 const allRoles = [
-  'PDG', 'DG', 'Directeur de Gare', 'Chef de Gare', 'Chauffeur', 
-  'Directeur des Réssources Humaines', 'Directeur des Affaires Financiere', 
+  'PDG', 'DG', 'Directeur de Gare', 'Chef de Gare', 'Chef de Gare Adjoint', 'Chauffeur', 
+  'Pompiste', 'Directeur des Réssources Humaines', 'Directeur des Affaires Financiere', 
   'Comptable', 'Responsable courrier', 'Bagagiste', 'Enregistreur', 
   'Controleur', 'Convoyeur', 'Chargeur', 'Chef bagagiste', 
   'Conseiller', 'Guichetier', 'Assistant guichet'
 ];
 
 // --- Components ---
+
+import { Logo } from '@/components/Logo';
 
 const ProfessionalCard = ({ employee, open, onOpenChange, onDelete, onEdit }: { 
   employee: Employee | null, 
@@ -115,91 +117,152 @@ const ProfessionalCard = ({ employee, open, onOpenChange, onDelete, onEdit }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-slate-950 text-white rounded-3xl">
-        <div className="relative h-48 bg-gradient-to-br from-primary via-primary/80 to-blue-600 p-6 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
-            <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">
-              Carte Professionnelle
+      <DialogContent className="max-w-[380px] p-0 overflow-hidden border-none bg-white rounded-none shadow-2xl max-h-[95vh]">
+        <ScrollArea className="h-full max-h-[95vh]">
+          <div className="relative w-full flex flex-col bg-white overflow-hidden border-4 border-slate-100 min-h-[600px]">
+            {/* Header Section with Diagonal Split */}
+            <div className="relative h-[140px] w-full overflow-hidden">
+              {/* The Blue Diagonal Shape - Adjusted clip-path for better look */}
+              <div 
+                className="absolute inset-0 bg-[#00408B]" 
+                style={{ clipPath: 'polygon(0 0, 100% 0, 100% 65%, 0 100%)' }}
+              />
+              
+              <div className="relative z-10 p-5 flex items-start gap-4">
+                <Logo size="md" showText={false} className="shadow-2xl border-white" />
+                
+                <div className="flex flex-col">
+                  <h1 className="text-3xl font-black text-white tracking-tighter leading-none">DBS-BAN</h1>
+                  <p className="text-white text-[10px] font-bold tracking-widest mt-2 opacity-90">DIOMANDÉ BAN SERVICE</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-1 rounded-md">
-              <QrCode className="h-8 w-8 text-slate-900" />
-            </div>
-          </div>
-          <div className="flex items-end gap-4 translate-y-12">
-            <div className="h-24 w-24 rounded-2xl border-4 border-slate-950 overflow-hidden bg-white shadow-2xl">
-              <Avatar className="h-full w-full rounded-none">
-                <AvatarImage src={employee.photo_url} />
-                <AvatarFallback className="text-2xl font-bold text-slate-900">
-                  {employee.full_name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="pb-1">
-              <h2 className="text-xl font-bold leading-tight">{employee.full_name}</h2>
-              <p className="text-white/80 text-xs font-medium uppercase tracking-wider">{employee.role}</p>
-              {employee.gare_id && (
-                <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-0.5">{employee.gare_id}</p>
-              )}
-            </div>
-          </div>
-        </div>
 
-        <div className="pt-16 pb-8 px-8 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Matricule</p>
-              <p className="text-sm font-mono font-bold text-primary-foreground">{employee.matricule}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Service</p>
-              <p className="text-sm font-bold">{employee.service}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Assignation</p>
-              <p className="text-sm font-bold capitalize">{employee.gare_id || 'Administration'}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Embauche</p>
-              <p className="text-sm font-bold">{new Date(employee.date_embauche).toLocaleDateString()}</p>
-            </div>
-          </div>
+            {/* Portrait Section */}
+            <div className="relative h-[160px] flex items-center justify-center mt-[-35px]">
+              {/* Blue Rings Background */}
+              <div className="absolute w-44 h-44 rounded-full border-[10px] border-[#00AEEF]/10 translate-x-1" />
+              <div className="absolute w-36 h-36 rounded-full border-[8px] border-[#00AEEF]/20 -translate-x-1" />
+              
+              {/* Main Avatar */}
+              <div className="relative w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden bg-slate-50 z-10 ring-1 ring-slate-100">
+                <Avatar className="h-full w-full rounded-none">
+                  <AvatarImage src={employee.photo_url} className="object-cover" />
+                  <AvatarFallback className="text-4xl font-black text-[#00408B] bg-slate-100">
+                    {employee.last_name[0]}{employee.first_name[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
 
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3 text-slate-300">
-              <div className="p-2 bg-white/5 rounded-lg"><Phone className="h-4 w-4" /></div>
-              <p className="text-sm">{employee.phone || 'Non renseigné'}</p>
             </div>
-            <div className="flex items-center gap-3 text-slate-300">
-              <div className="p-2 bg-white/5 rounded-lg"><Mail className="h-4 w-4" /></div>
-              <p className="text-sm truncate">{employee.email || 'Non renseigné'}</p>
-            </div>
-          </div>
 
-          <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">DBS BAN - RH</p>
-            <div className="flex gap-2">
-              {onEdit && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-white hover:text-white hover:bg-white/10 h-8 rounded-lg"
-                  onClick={() => onEdit(employee)}
-                >
-                  <Briefcase className="h-4 w-4 mr-1" /> Modifier
-                </Button>
-              )}
-              {onDelete && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 h-8 rounded-lg"
-                  onClick={() => onDelete(employee.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Supprimer
-                </Button>
-              )}
+            {/* Info Section */}
+            <div className="px-10 py-5 space-y-3">
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Nom</span>
+                <span className="text-xl font-black text-[#00408B] leading-none uppercase truncate">: {employee.last_name}</span>
+              </div>
+              
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Prénom</span>
+                <span className="text-xl font-black text-[#00408B] leading-none uppercase truncate">: {employee.first_name}</span>
+              </div>
+              
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Fonction</span>
+                <span className="text-xl font-black text-red-600 leading-none uppercase truncate">: {employee.role}</span>
+              </div>
+              
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Domicile</span>
+                <span className="text-xl font-black text-[#00408B] leading-none capitalize truncate">: {employee.adresse || employee.gare_id || 'Abidjan'}</span>
+              </div>
+              
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Contacte</span>
+                <span className="text-xl font-black text-[#00408B] leading-none truncate">: {employee.phone || '00 00 00 00 00'}</span>
+              </div>
+
+              <div className="grid grid-cols-[110px_1fr] items-baseline gap-2">
+                <span className="text-xl font-bold text-[#00408B]">Email</span>
+                <span className="text-[13px] font-black text-[#00408B] leading-none truncate">: {employee.email || 'N/A'}</span>
+              </div>
+
+              {/* Extra info for completeness since user said "all information" */}
+              <div className="pt-3 border-t border-slate-100 grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Matricule</span>
+                  <span className="text-sm font-mono font-black text-[#00408B]">{employee.matricule}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Embauche</span>
+                  <span className="text-sm font-black text-slate-600">{new Date(employee.date_embauche).toLocaleDateString('fr-FR')}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Gare d'attache</span>
+                  <span className="text-sm font-black text-slate-600 uppercase">{employee.gare_id || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Service</span>
+                  <span className="text-sm font-black text-slate-600 uppercase">{employee.service || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bus Graphic */}
+            <div className="px-6 pb-2 mt-auto">
+              <div className="relative h-16 w-full opacity-80 overflow-hidden rounded-xl">
+                <img 
+                  src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=400" 
+                  alt="Bus" 
+                  className="w-full h-full object-cover scale-x-[-1] brightness-110 contrast-110 mix-blend-multiply" 
+                />
+                <div className="absolute right-4 bottom-2 text-[10px] font-black text-[#00408B] bg-white/40 px-1 rounded">DBS</div>
+              </div>
+            </div>
+
+            {/* Footer Bar */}
+            <div className="bg-[#E31E24] py-3 w-full shrink-0">
+              <h3 className="text-center text-white text-2xl font-black tracking-[0.05em] uppercase">
+                CARTE PROFESSIONNELLE
+              </h3>
             </div>
           </div>
+        </ScrollArea>
+
+        {/* Action buttons (fixed overlay) */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-50">
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="rounded-full shadow-lg bg-white/80 backdrop-blur-sm text-[#00408B] hover:bg-white h-9 w-9"
+            onClick={() => onOpenChange(false)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          {onEdit && (
+            <Button 
+              size="icon" 
+              variant="secondary" 
+              className="rounded-full shadow-lg bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white h-9 w-9"
+              onClick={() => onEdit(employee)}
+            >
+              <Briefcase className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button 
+              size="icon" 
+              variant="destructive" 
+              className="rounded-full shadow-lg h-9 w-9"
+              onClick={() => onDelete(employee.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

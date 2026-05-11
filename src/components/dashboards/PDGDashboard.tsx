@@ -21,6 +21,9 @@ import {
   LineChart, 
   Line 
 } from 'recharts';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'motion/react';
 
 import { GARES } from '@/constants';
 
@@ -50,14 +53,15 @@ export function PDGDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Tableau de Bord Stratégique</h1>
-        <p className="text-muted-foreground mt-2">Vue d'ensemble de la performance globale de DBS-BAN.</p>
+        <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Tableau de Bord Stratégique</h1>
+        <p className="text-muted-foreground mt-2 font-medium">Vue d'ensemble de la performance globale de DBS-BAN.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="Recettes Totales" 
-          value="12,450,000 FCFA" 
+          value="12,450,000" 
+          unit="FCFA"
           change="+12.5%" 
           trend="up" 
           icon={TrendingUp} 
@@ -65,7 +69,8 @@ export function PDGDashboard() {
         />
         <StatCard 
           title="Dépenses Totales" 
-          value="4,230,000 FCFA" 
+          value="4,230,000" 
+          unit="FCFA"
           change="-2.4%" 
           trend="down" 
           icon={CreditCard} 
@@ -90,46 +95,48 @@ export function PDGDashboard() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4 shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Flux de Trésorerie</CardTitle>
-            <CardDescription>Comparaison des recettes et dépenses hebdomadaires</CardDescription>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="lg:col-span-4 shadow-xl shadow-slate-200/50 border-none bg-white rounded-[2rem] overflow-hidden">
+          <CardHeader className="p-8">
+            <CardTitle className="text-lg font-black uppercase tracking-tight">Flux de Trésorerie</CardTitle>
+            <CardDescription className="font-medium">Comparaison des recettes et dépenses hebdomadaires</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[350px] p-8 pt-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+              <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
                 <Tooltip 
-                  cursor={{fill: '#f8fafc'}}
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  cursor={{fill: 'oklch(var(--secondary) / 0.5)'}}
+                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px'}}
                 />
-                <Bar dataKey="recettes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="depenses" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="recettes" fill="oklch(var(--primary))" radius={[6, 6, 0, 0]} barSize={24} />
+                <Bar dataKey="depenses" fill="oklch(var(--muted-foreground) / 0.3)" radius={[6, 6, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3 shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Performance des Gares</CardTitle>
-            <CardDescription>Top 3 des gares les plus rentables</CardDescription>
+        <Card className="lg:col-span-3 shadow-xl shadow-slate-200/50 border-none bg-white rounded-[2rem]">
+          <CardHeader className="p-8">
+            <CardTitle className="text-lg font-black uppercase tracking-tight">Performance des Gares</CardTitle>
+            <CardDescription className="font-medium">Top 3 des gares les plus rentables</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8 p-8 pt-0">
             {topGares.map((gare) => (
-              <div key={gare.name} className="space-y-2">
-                <div className="flex items-center justify-between text-sm pr-1">
-                  <span className="font-medium text-slate-700">{gare.name}</span>
-                  <span className="text-slate-500">{gare.value}% d'objectif</span>
+              <div key={gare.name} className="space-y-3">
+                <div className="flex items-center justify-between text-xs pr-1">
+                  <span className="font-black text-slate-800 uppercase tracking-wider">{gare.name}</span>
+                  <span className="text-slate-400 font-bold">{gare.value}%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full" 
+                <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5 ring-1 ring-slate-100">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${gare.value}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full shadow-sm" 
                     style={{ 
-                      width: `${gare.value}%`,
                       backgroundColor: gare.color 
                     }}
                   />
@@ -143,25 +150,35 @@ export function PDGDashboard() {
   );
 }
 
-function StatCard({ title, value, change, trend, icon: Icon, description, variant }: any) {
+function StatCard({ title, value, unit, change, trend, icon: Icon, description, variant }: any) {
   return (
-    <Card className="border-none shadow-sm transition-all hover:shadow-md">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`p-2 rounded-lg ${variant === 'destructive' ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'}`}>
-            <Icon className="h-5 w-5" />
+    <Card className="border-none shadow-xl shadow-slate-200/50 transition-all hover:scale-[1.02] rounded-[2rem] bg-white overflow-hidden group">
+      <CardContent className="p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className={cn(
+            "p-3 rounded-2xl transition-colors",
+            variant === 'destructive' 
+              ? 'bg-rose-50 text-rose-600' 
+              : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
+          )}>
+            <Icon className="h-6 w-6" />
           </div>
-          <div className={`flex items-center text-xs font-medium ${trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {trend === 'up' ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
-            {change}
-          </div>
+          <Badge className={cn(
+            "border-none px-2 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase",
+            trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+          )}>
+            {trend === 'up' ? '▲' : '▼'} {change}
+          </Badge>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">{title}</p>
+          <div className="flex items-baseline gap-1">
+            <p className="text-2xl font-black tracking-tighter text-slate-900">{value}</p>
+            {unit && <span className="text-[10px] font-black text-slate-300">{unit}</span>}
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-4 flex items-center">
-          {description}
+        <p className="text-[10px] font-bold text-slate-400 uppercase mt-4 tracking-widest flex items-center gap-1">
+          <div className="h-1 w-1 rounded-full bg-slate-300" /> {description}
         </p>
       </CardContent>
     </Card>

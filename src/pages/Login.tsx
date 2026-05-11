@@ -9,6 +9,8 @@ import { Bus, Lock, Mail, Users, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 
+import { Logo } from '@/components/Logo';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,40 +43,40 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-sidebar p-4 relative overflow-hidden">
       {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600 rounded-full blur-3xl"></div>
+      <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-primary/30 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-24 -right-24 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px]"></div>
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-md z-10"
       >
-        <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm">
-          <CardHeader className="space-y-1 text-center pb-8">
-            <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-              <Bus className="h-8 w-8 text-primary" />
+        <Card className="border-none shadow-2xl bg-white rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="space-y-6 text-center p-12 pb-6">
+            <Logo size="xl" showText={false} className="mx-auto drop-shadow-2xl" />
+            <div>
+              <CardTitle className="text-5xl font-black tracking-tighter text-slate-900 leading-none">DBS-BAN</CardTitle>
+              <CardDescription className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">
+                Système de Gestion de Transport
+              </CardDescription>
             </div>
-            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">DBS-BAN</CardTitle>
-            <CardDescription className="text-slate-500 font-medium">
-              Système de Gestion Intégrée de Transport
-            </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
+            <CardContent className="px-10 space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-[10px] uppercase font-black tracking-widest text-slate-400 ml-1">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="nom@dbs-ban.com" 
-                    className="pl-10"
+                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none focus-visible:ring-primary/20 transition-all font-medium"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required 
@@ -82,18 +84,18 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Button variant="link" className="px-0 font-normal text-xs text-slate-500">
-                    Mot de passe oublié?
+                <div className="flex items-center justify-between ml-1">
+                  <Label htmlFor="password" className="text-[10px] uppercase font-black tracking-widest text-slate-400">Mot de passe</Label>
+                  <Button variant="link" className="px-0 h-auto font-bold text-[10px] uppercase tracking-widest text-primary/60 hover:text-primary">
+                    Oublié ?
                   </Button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input 
                     id="password" 
                     type={showPassword ? "text" : "password"} 
-                    className="pl-10 pr-10"
+                    className="pl-12 pr-12 h-14 rounded-2xl bg-slate-50 border-none focus-visible:ring-primary/20 transition-all font-medium"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required 
@@ -101,28 +103,28 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-5 w-5" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
                     )}
                   </button>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
+            <CardFooter className="px-10 pb-10 pt-6 flex flex-col gap-6">
+              <Button type="submit" className="w-full h-14 text-base font-black uppercase tracking-widest rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]" disabled={loading}>
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
               
-              <div className="relative w-full py-2">
+              <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-slate-100"></span>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-slate-400 font-bold">Ou</span>
+                <div className="relative flex justify-center text-[10px] uppercase font-black">
+                  <span className="bg-white px-4 text-slate-300 tracking-widest">Identification</span>
                 </div>
               </div>
 
@@ -139,14 +141,14 @@ export default function LoginPage() {
                   localStorage.setItem('dbs_demo_user', JSON.stringify(demoUser));
                   window.location.reload();
                 }}
-                className="w-full h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
+                className="w-full h-14 border-slate-100 rounded-2xl text-slate-400 hover:bg-slate-50 hover:text-slate-900 font-black uppercase tracking-widest text-[10px] transition-all"
               >
-                Accéder en Mode Démo
+                Accéder Mode Démo
               </Button>
 
-              <div className="text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+              <div className="text-center text-[10px] text-slate-300 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <ShieldAlert className="h-3 w-3" />
-                Accès restreint au personnel autorisé
+                Accès restreint aux autorisés
               </div>
             </CardFooter>
           </form>

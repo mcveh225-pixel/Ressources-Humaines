@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { DashboardLayout } from './components/DashboardLayout';
@@ -11,10 +11,38 @@ import LoginPage from './pages/Login';
 import DashboardPage from './pages/Dashboard';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { supabase } from '@/lib/supabase';
+import { GARES } from '@/constants';
+
+function GareSync() {
+  useEffect(() => {
+    const syncGares = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session) return;
+
+        const garesToSync = GARES.map(g => ({
+          id: g.id,
+          name: g.name,
+          location: g.location || g.name
+        }));
+        
+        await supabase.from('gares').upsert(garesToSync, { onConflict: 'id' });
+        console.log('Global Gare Sync completed');
+      } catch (err) {
+        console.warn('Global Gare Sync failed:', err);
+      }
+    };
+    syncGares();
+  }, []);
+
+  return null;
+}
 
 export default function App() {
   return (
     <AuthProvider>
+      <GareSync />
       <TooltipProvider>
         <Router>
           <Routes>
