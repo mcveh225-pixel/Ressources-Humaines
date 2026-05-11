@@ -1,0 +1,9 @@
+{
+  "name": "DBS-BAN Management",
+  "description": "Système de Gestion Intégrée pour la compagnie de transport DBS-BAN. Inclut la gestion RH, financière, technique et exploitation avec accès multi-rôles.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
