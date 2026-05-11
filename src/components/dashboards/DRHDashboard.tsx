@@ -12,6 +12,8 @@ import {
   FileText,
   BadgeCheck,
   Building2,
+  Building,
+  Warehouse,
   Briefcase,
   Phone,
   Mail,
@@ -23,7 +25,9 @@ import {
   Wrench,
   Camera,
   Image as ImageIcon,
-  Upload
+  Upload,
+  Download,
+  FileSpreadsheet
 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +56,9 @@ import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // --- Types ---
 interface Employee {
@@ -77,6 +84,8 @@ interface Employee {
 interface Gare {
   id: string;
   name: string;
+  color?: string;
+  icon?: string;
 }
 
 interface DRHDashboardProps {
@@ -102,14 +111,10 @@ const ProfessionalCard = ({ employee, open, onOpenChange, onDelete, onEdit }: {
   onDelete?: (id: string) => void,
   onEdit?: (employee: Employee) => void
 }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
   if (!employee) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      onOpenChange(val);
-      if (!val) setIsDeleting(false);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-slate-950 text-white rounded-3xl">
         <div className="relative h-48 bg-gradient-to-br from-primary via-primary/80 to-blue-600 p-6 flex flex-col justify-between">
           <div className="flex justify-between items-start">
@@ -173,35 +178,25 @@ const ProfessionalCard = ({ employee, open, onOpenChange, onDelete, onEdit }: {
           <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-2">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">DBS BAN - RH</p>
             <div className="flex gap-2">
-              {!isDeleting ? (
-                <>
-                  {onEdit && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-white hover:text-white hover:bg-white/10 h-8 rounded-lg"
-                      onClick={() => onEdit(employee)}
-                    >
-                      <Briefcase className="h-4 w-4 mr-1" /> Modifier
-                    </Button>
-                  )}
-                  {onDelete && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 h-8 rounded-lg"
-                      onClick={() => setIsDeleting(true)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Supprimer
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-2 bg-rose-500/10 p-1 px-2 rounded-lg border border-rose-500/20">
-                  <span className="text-[10px] font-bold text-rose-500 uppercase">Supprimer ?</span>
-                  <Button size="sm" variant="ghost" className="h-6 px-2 text-rose-500 hover:bg-rose-500 hover:text-white rounded-md text-[10px] font-bold" onClick={() => onDelete?.(employee.id)}>Oui</Button>
-                  <Button size="sm" variant="ghost" className="h-6 px-2 text-slate-400 hover:bg-white/10 rounded-md text-[10px] font-bold" onClick={() => setIsDeleting(false)}>Non</Button>
-                </div>
+              {onEdit && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:text-white hover:bg-white/10 h-8 rounded-lg"
+                  onClick={() => onEdit(employee)}
+                >
+                  <Briefcase className="h-4 w-4 mr-1" /> Modifier
+                </Button>
+              )}
+              {onDelete && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 h-8 rounded-lg"
+                  onClick={() => onDelete(employee.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                </Button>
               )}
             </div>
           </div>
@@ -219,6 +214,8 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -439,17 +436,29 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteEmployee = async (id: string) => {
+  const handleDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+    
+    setSaving(true);
     try {
-      const { error } = await supabase.from('employees').delete().eq('id', id);
+      const { error } = await supabase.from('employees').delete().eq('id', employeeToDelete);
       if (error) throw error;
       
-      toast.success("Employé supprimé");
-      setEmployees(employees.filter(e => e.id !== id));
+      toast.success("Employé supprimé avec succès");
+      setEmployees(employees.filter(e => e.id !== employeeToDelete));
+      setIsDeleteDialogOpen(false);
       setIsCardOpen(false);
+      setEmployeeToDelete(null);
     } catch (error: any) {
-      toast.error("Erreur: " + error.message);
+      toast.error("Erreur lors de la suppression: " + error.message);
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const confirmDelete = (id: string) => {
+    setEmployeeToDelete(id);
+    setIsDeleteDialogOpen(true);
   };
 
   const filteredEmployees = employees.filter(emp => {
@@ -469,6 +478,94 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
     return matchesSearch;
   });
 
+  const exportToExcel = () => {
+    try {
+      const dataToExport = filteredEmployees.map(emp => ({
+        Matricule: emp.matricule,
+        Nom: emp.last_name,
+        Prénom: emp.first_name,
+        'Nom Complet': emp.full_name,
+        Rôle: emp.role,
+        Service: emp.service,
+        Gare: emp.service === 'Gare' ? emp.gare_id : 'Non assigné',
+        Téléphone: emp.phone || '',
+        Email: emp.email || '',
+        Sexe: emp.sexe || '',
+        Adresse: emp.adresse || '',
+        CNI: emp.cni_number || '',
+        Permis: emp.permis_number || '',
+        'Date d\'embauche': emp.date_embauche
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Personnel");
+      
+      // Auto-size columns
+      const maxWidths = Object.keys(dataToExport[0] || {}).map(key => {
+        const headerLen = key.length;
+        const maxValLen = dataToExport.reduce((max, row: any) => {
+          const val = row[key] ? String(row[key]).length : 0;
+          return Math.max(max, val);
+        }, 0);
+        return { wch: Math.max(headerLen, maxValLen) + 2 };
+      });
+      worksheet['!cols'] = maxWidths;
+
+      XLSX.writeFile(workbook, `DBS_Personnel_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Liste exportée en Excel");
+    } catch (error: any) {
+      toast.error("Erreur d'export Excel: " + error.message);
+    }
+  };
+
+  const exportToPDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.setTextColor(51, 65, 85); // slate-700
+      doc.text("DBS BAN - LISTE DU PERSONNEL", 14, 22);
+      
+      // Add metadata
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text(`Date d'export: ${new Date().toLocaleDateString()}`, 14, 30);
+      doc.text(`Total employés: ${filteredEmployees.length}`, 14, 35);
+      
+      const head = [['Matricule', 'Nom Complet', 'Rôle', 'Service', 'Assignation']];
+      const body = filteredEmployees.map(emp => [
+        emp.matricule,
+        emp.full_name,
+        emp.role,
+        emp.service,
+        emp.gare_id || 'Admin'
+      ]);
+
+      autoTable(doc, {
+        head,
+        body,
+        startY: 45,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { top: 40 },
+        didDrawPage: (data) => {
+          // Footer
+          const str = `Page ${data.pageNumber}`;
+          doc.setFontSize(10);
+          doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        }
+      });
+
+      doc.save(`DBS_Personnel_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("Liste exportée en PDF");
+    } catch (error: any) {
+      toast.error("Erreur d'export PDF: " + error.message);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-64"><Clock className="animate-spin h-8 w-8 text-primary" /></div>;
 
   const renderContent = () => {
@@ -477,7 +574,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
         return (
           <div className="space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-md w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
                   placeholder="Chercher par nom ou matricule..." 
@@ -486,10 +583,28 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                   className="pl-12 h-12 rounded-2xl bg-white border-none shadow-sm"
                 />
               </div>
-              <Button onClick={() => setIsAddDialogOpen(true)} className="rounded-2xl h-12 px-6 gap-2 bg-primary hover:bg-primary/90">
-                <UserPlus className="h-5 w-5" />
-                Nouveau Personnel
-              </Button>
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <Button 
+                  variant="outline" 
+                  onClick={exportToExcel}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+                  Excel
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={exportToPDF}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileText className="h-5 w-5 text-rose-500" />
+                  PDF
+                </Button>
+                <Button onClick={() => setIsAddDialogOpen(true)} className="rounded-2xl h-12 px-6 gap-2 bg-primary hover:bg-primary/90 shrink-0">
+                  <UserPlus className="h-5 w-5" />
+                  Nouveau
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -581,16 +696,41 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
 
       case 'gares':
         if (selectedGare) {
-          const currentGareName = allGaresList.find(g => g.id === selectedGare)?.name || selectedGare;
+          const currentGare = allGaresList.find(g => g.id === selectedGare);
+          const currentGareName = currentGare?.name || selectedGare;
+          const currentGareColor = currentGare?.color || '#3b82f6';
+          
           return (
             <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => setSelectedGare(null)} className="rounded-full h-12 w-12 p-0 bg-white shadow-sm hover:bg-slate-50">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 uppercase">Gare: {currentGareName}</h2>
-                  <p className="text-muted-foreground text-sm font-medium">Liste du personnel affecté à cette gare</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" onClick={() => setSelectedGare(null)} className="rounded-full h-12 w-12 p-0 bg-white shadow-sm hover:bg-slate-50">
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 uppercase">
+                      Gare: <span style={{ color: currentGareColor }}>{currentGareName}</span>
+                    </h2>
+                    <p className="text-muted-foreground text-sm font-medium">Liste du personnel affecté à cette gare</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  <Button 
+                    variant="outline" 
+                    onClick={exportToExcel}
+                    className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                  >
+                    <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+                    Excel
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={exportToPDF}
+                    className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                  >
+                    <FileText className="h-5 w-5 text-rose-500" />
+                    PDF
+                  </Button>
                 </div>
               </div>
               
@@ -633,31 +773,69 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
         }
         return (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {allGaresList.map((gare) => (
-              <motion.button
-                key={gare.id}
-                whileHover={{ y: -4, scale: 1.02 }}
-                onClick={() => setSelectedGare(gare.id)}
-                className="aspect-square flex flex-col items-center justify-center p-6 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-transparent hover:border-primary/10"
-              >
-                <div className="h-14 w-14 bg-slate-50 text-slate-400 group-hover:bg-primary/5 group-hover:text-primary rounded-2xl flex items-center justify-center mb-4 transition-colors">
-                  <Building2 className="h-7 w-7" />
-                </div>
-                <span className="font-bold text-slate-900 text-center text-sm">{gare.name}</span>
-                <Badge className="mt-3 bg-slate-100 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors border-none font-black text-[10px]">
-                  {employees.filter(e => e.gare_id === gare.id).length} Pers.
-                </Badge>
-              </motion.button>
-            ))}
+            {allGaresList.map((gare) => {
+              const IconComponent = gare.icon === 'Warehouse' ? Warehouse : 
+                                   gare.icon === 'Building' ? Building : 
+                                   gare.icon === 'Building2' ? Building2 : MapPin;
+                                   
+              return (
+                <motion.button
+                  key={gare.id}
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => setSelectedGare(gare.id)}
+                  className="aspect-square flex flex-col items-center justify-center p-6 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-transparent hover:border-primary/10"
+                >
+                  <div 
+                    className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4 transition-colors"
+                    style={{ 
+                      backgroundColor: `${gare.color}10`,
+                      color: gare.color
+                    }}
+                  >
+                    <IconComponent className="h-7 w-7" />
+                  </div>
+                  <span className="font-bold text-slate-900 text-center text-sm">{gare.name}</span>
+                  <Badge 
+                    className="mt-3 border-none font-black text-[10px]"
+                    style={{ 
+                      backgroundColor: `${gare.color}20`,
+                      color: gare.color
+                    }}
+                  >
+                    {employees.filter(e => e.gare_id === gare.id).length} Pers.
+                  </Badge>
+                </motion.button>
+              );
+            })}
           </div>
         );
 
       case 'technique':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-900 uppercase flex items-center gap-3">
-              <Wrench className="h-7 w-7 text-primary" /> Personnel Technique
-            </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl font-black text-slate-900 uppercase flex items-center gap-3">
+                <Wrench className="h-7 w-7 text-primary" /> Personnel Technique
+              </h2>
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <Button 
+                  variant="outline" 
+                  onClick={exportToExcel}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+                  Excel
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={exportToPDF}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileText className="h-5 w-5 text-rose-500" />
+                  PDF
+                </Button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map((emp) => (
                 <motion.div
@@ -682,9 +860,29 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
       case 'administration':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-900 uppercase flex items-center gap-3">
-              <Building2 className="h-7 w-7 text-primary" /> Administration
-            </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl font-black text-slate-900 uppercase flex items-center gap-3">
+                <Building2 className="h-7 w-7 text-primary" /> Administration
+              </h2>
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <Button 
+                  variant="outline" 
+                  onClick={exportToExcel}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+                  Excel
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={exportToPDF}
+                  className="rounded-2xl h-12 px-4 gap-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold shrink-0"
+                >
+                  <FileText className="h-5 w-5 text-rose-500" />
+                  PDF
+                </Button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map((emp) => (
                 <motion.div
@@ -741,9 +939,42 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
         employee={selectedEmployee} 
         open={isCardOpen} 
         onOpenChange={setIsCardOpen}
-        onDelete={handleDeleteEmployee}
+        onDelete={confirmDelete}
         onEdit={startEdit}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-sm rounded-[2rem] p-8 border-none shadow-2xl">
+          <DialogHeader>
+            <div className="mx-auto w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
+              <Trash2 className="h-8 w-8" />
+            </div>
+            <DialogTitle className="text-xl font-black text-center uppercase tracking-tight">Supprimer l'employé ?</DialogTitle>
+            <DialogDescription className="text-center font-medium pt-2">
+              Cette action est irréversible. Toutes les données liées à cet employé seront supprimées.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="rounded-xl h-12 flex-1 border-slate-200"
+            >
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteEmployee}
+              disabled={saving}
+              className="rounded-xl h-12 flex-1 bg-rose-500 hover:bg-rose-600"
+            >
+              {saving ? <Clock className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
         if (!open) {

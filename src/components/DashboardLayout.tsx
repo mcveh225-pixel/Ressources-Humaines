@@ -42,9 +42,9 @@ export function DashboardLayout() {
         <header className="lg:hidden flex items-center h-16 px-4 border-b bg-card">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors focus:outline-none">
-                <Menu className="h-6 w-6 text-primary" />
-              </button>
+              <Button variant="ghost" size="icon" className="lg:hidden text-primary">
+                <Menu className="h-6 w-6" />
+              </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
               <Sidebar className="w-full" />

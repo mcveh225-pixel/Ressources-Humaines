@@ -22,6 +22,8 @@ import {
   Line 
 } from 'recharts';
 
+import { GARES } from '@/constants';
+
 const data = [
   { name: 'Lun', recettes: 4000, depenses: 2400 },
   { name: 'Mar', recettes: 3000, depenses: 1398 },
@@ -33,6 +35,18 @@ const data = [
 ];
 
 export function PDGDashboard() {
+  const topGares = [
+    { name: 'Adjamé', value: 85 },
+    { name: 'San Pedro', value: 72 },
+    { name: 'Yopougon', value: 64 },
+  ].map(item => {
+    const gareInfo = GARES.find(g => g.name === item.name);
+    return {
+      ...item,
+      color: gareInfo?.color || '#3b82f6'
+    };
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -105,11 +119,7 @@ export function PDGDashboard() {
             <CardDescription>Top 3 des gares les plus rentables</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {[
-              { name: 'Adjamé', value: 85, color: 'bg-blue-500' },
-              { name: 'San Pedro', value: 72, color: 'bg-emerald-500' },
-              { name: 'Yopougon', value: 64, color: 'bg-amber-500' },
-            ].map((gare) => (
+            {topGares.map((gare) => (
               <div key={gare.name} className="space-y-2">
                 <div className="flex items-center justify-between text-sm pr-1">
                   <span className="font-medium text-slate-700">{gare.name}</span>
@@ -117,8 +127,11 @@ export function PDGDashboard() {
                 </div>
                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full ${gare.color}`} 
-                    style={{ width: `${gare.value}%` }}
+                    className="h-full" 
+                    style={{ 
+                      width: `${gare.value}%`,
+                      backgroundColor: gare.color 
+                    }}
                   />
                 </div>
               </div>

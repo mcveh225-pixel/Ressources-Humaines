@@ -52,6 +52,8 @@ export interface Gare {
   id: string;
   name: string;
   location: string;
+  color?: string;
+  icon?: string;
 }
 
 export interface Recette {

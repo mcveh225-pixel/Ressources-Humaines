@@ -116,6 +116,34 @@ export default function LoginPage() {
               <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
+              
+              <div className="relative w-full py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-100"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-slate-400 font-bold">Ou</span>
+                </div>
+              </div>
+
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  const demoUser = {
+                    id: 'demo-user-id',
+                    email: 'demo@dbs-ban.ci',
+                    fullName: 'Utilisateur Démo',
+                    role: 'PDG'
+                  };
+                  localStorage.setItem('dbs_demo_user', JSON.stringify(demoUser));
+                  window.location.reload();
+                }}
+                className="w-full h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
+              >
+                Accéder en Mode Démo
+              </Button>
+
               <div className="text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                 <ShieldAlert className="h-3 w-3" />
                 Accès restreint au personnel autorisé

@@ -43,8 +43,8 @@ export function ChauffeurDashboard() {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-4xl font-black">ADJAMÉ</span>
-                <span className="text-xs text-white/60 font-bold uppercase tracking-widest">Départ: 14:30</span>
+                <span className="text-4xl font-black uppercase">{user?.gareId || 'Abidjan'}</span>
+                <span className="text-xs text-white/60 font-bold uppercase tracking-widest">En attente de départ</span>
               </div>
               <motion.div 
                 animate={{ x: [0, 10, 0] }}
@@ -53,28 +53,28 @@ export function ChauffeurDashboard() {
                 <ArrowRight className="h-8 w-8 text-white/40" />
               </motion.div>
               <div className="flex flex-col text-right">
-                <span className="text-4xl font-black">SAN PEDRO</span>
-                <span className="text-xs text-white/60 font-bold uppercase tracking-widest">ETA: 20:30</span>
+                <span className="text-4xl font-black uppercase">Destination</span>
+                <span className="text-xs text-white/60 font-bold uppercase tracking-widest">Non définie</span>
               </div>
             </div>
 
             <div className="h-2 w-full bg-white/20 rounded-full">
-              <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: '35%' }} />
+              <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: '0%' }} />
             </div>
 
             <div className="flex items-center justify-between pt-2">
               <div className="flex gap-4">
                  <div className="flex flex-col">
                     <span className="text-[10px] text-white/50 uppercase font-black">Passagers</span>
-                    <span className="text-xl font-bold">58/70</span>
+                    <span className="text-xl font-bold">--/--</span>
                  </div>
                  <div className="flex flex-col">
-                    <span className="text-[10px] text-white/50 uppercase font-black">Voyage</span>
-                    <span className="text-xl font-bold">DP-102</span>
+                    <span className="text-[10px] text-white/50 uppercase font-black">Code Voyage</span>
+                    <span className="text-xl font-bold">--</span>
                  </div>
               </div>
-              <Button size="lg" className="bg-white text-primary hover:bg-slate-50 font-bold rounded-xl px-8 shadow-lg">
-                DÉMARRER
+              <Button size="lg" disabled className="bg-white/20 text-white/40 cursor-not-allowed font-bold rounded-xl px-8 shadow-lg">
+                INDISPONIBLE
               </Button>
             </div>
           </CardContent>
@@ -116,26 +116,9 @@ export function ChauffeurDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-               <div className="space-y-1">
-                 <p className="text-sm font-bold text-slate-900">Adjamé → Man</p>
-                 <p className="text-xs text-slate-500">07 Mai 2026 • 550km</p>
-               </div>
-               <div className="text-right">
-                 <Badge className="bg-emerald-50 text-emerald-700 border-none">Terminé</Badge>
-                 <p className="text-xs font-bold text-slate-700 mt-1">11:00h</p>
-               </div>
-             </div>
-             
-             <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-               <div className="space-y-1">
-                 <p className="text-sm font-bold text-slate-900">Duekoué → Yamoussoukro</p>
-                 <p className="text-xs text-slate-500">06 Mai 2026 • 240km</p>
-               </div>
-               <div className="text-right">
-                 <Badge className="bg-emerald-50 text-emerald-700 border-none">Terminé</Badge>
-                 <p className="text-xs font-bold text-slate-700 mt-1">04:30h</p>
-               </div>
+             <div className="flex flex-col items-center justify-center py-8 text-center">
+               <History className="h-12 w-12 text-slate-100 mb-2" />
+               <p className="text-sm font-bold text-slate-400 capitalize">Aucun voyage récent enregistré</p>
              </div>
           </CardContent>
         </Card>

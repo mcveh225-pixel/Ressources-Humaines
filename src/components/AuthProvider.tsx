@@ -20,131 +20,123 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider: Initializing...');
     
-    // Safety timeout to prevent infinite loading
-    const safetyTimeout = setTimeout(() => {
-      if (loading) {
-        console.warn('AuthProvider: Initialization timed out after 5s. Forcing loading = false.');
-        setLoading(false);
-      }
-    }, 5000);
+    let isMounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('AuthProvider: Checking session...');
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error('AuthProvider: Session check error:', sessionError);
-        }
+        if (!isMounted) return;
 
         if (initialSession) {
-          console.log('AuthProvider: Real session found for:', initialSession.user.email);
           setSession(initialSession);
           await fetchProfile(initialSession.user.id, initialSession.user.email);
         } else {
-          console.log('AuthProvider: No real session, checking demo mode...');
+          // Check for manual demo mode
           const demoUserJson = localStorage.getItem('dbs_demo_user');
           if (demoUserJson) {
             try {
               const demoUser = JSON.parse(demoUserJson);
               setUser(demoUser);
+              // Mock a session object for the app to allow entry
               setSession({ user: { id: demoUser.id, email: demoUser.email } } as any);
-              console.log('AuthProvider: Demo session loaded:', demoUser.email);
             } catch (e) {
-              console.error('AuthProvider: Failed to parse demo user:', e);
               localStorage.removeItem('dbs_demo_user');
             }
           }
+          setLoading(false);
         }
       } catch (err) {
-        console.error('AuthProvider: Fatal initialization error:', err);
-        localStorage.removeItem('dbs_demo_user');
-      } finally {
-        console.log('AuthProvider: Initialization complete.');
-        setLoading(false);
-        clearTimeout(safetyTimeout);
+        console.error('AuthProvider: Init error:', err);
+        if (isMounted) setLoading(false);
       }
     };
 
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('AuthProvider: Auth event change:', event);
+      if (!isMounted) return;
+      console.log('AuthProvider: Auth event:', event);
       
-      if (event === 'SIGNED_OUT') {
+      if (currentSession) {
+        localStorage.removeItem('dbs_demo_user'); // Real user takes precedence
+        setSession(currentSession);
+        await fetchProfile(currentSession.user.id, currentSession.user.email);
+      } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('dbs_demo_user');
         setUser(null);
         setSession(null);
         setLoading(false);
-        return;
       }
-
-      if (currentSession) {
-        console.log('AuthProvider: Session active after event for:', currentSession.user.email);
-        setSession(currentSession);
-        localStorage.removeItem('dbs_demo_user');
-        await fetchProfile(currentSession.user.id, currentSession.user.email);
-      } else if (!localStorage.getItem('dbs_demo_user')) {
-        setUser(null);
-        setSession(null);
-      }
-      
-      setLoading(false);
     });
 
     return () => {
-      clearTimeout(safetyTimeout);
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const fetchProfile = async (userId: string, email?: string) => {
     const userEmail = email || '';
-    const isAdminCandidate = userEmail === 'pdg@dbs-ban.ci' || userEmail.toLowerCase().includes('mcveh225@gmail.com');
     
-    console.log('AuthProvider: Fetching profile for:', userId, 'Email:', userEmail, 'IsAdminCandidate:', isAdminCandidate);
+    const inferRoleFromEmail = (email: string): UserRole => {
+      const e = email.toLowerCase();
+      if (e.includes('pdg')) return UserRole.PDG;
+      if (e.includes('drh')) return UserRole.DRH;
+      if (e.includes('finan') || e.includes('daf')) return UserRole.DAF;
+      if (e.includes('compt')) return UserRole.COMPTABLE;
+      if (e.includes('tech')) return UserRole.SERVICE_TECHNIQUE;
+      if (e.includes('gare')) return UserRole.CHEF_DE_GARE;
+      if (e.includes('chauf')) return UserRole.CHAUFFEUR;
+      if (e.includes('mcveh225')) return UserRole.PDG;
+      return UserRole.CHAUFFEUR;
+    };
+
+    const isAdminCandidate = userEmail === 'pdg@dbs-ban.ci' || userEmail.toLowerCase().includes('mcveh225@gmail.com');
+    const inferredRole = inferRoleFromEmail(userEmail);
+    
+    console.log('AuthProvider: Fetching profile for:', userId, 'Email:', userEmail, 'Inferred Role:', inferredRole);
     
     try {
-      // Add a timeout to the profile fetch to prevent hanging
+      // Increased timeout to 10s to prevent premature fallbacks on slow networks
       const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .limit(1);
+        .single();
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 3000)
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
       );
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+      const { data: profile, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
-      if (error || !data || data.length === 0) {
+      if (error || !profile) {
         console.warn('Profile fetch failed or empty, using fallback. Error:', error?.message);
         
         const fallbackUser: UserProfile = {
           id: userId,
           email: userEmail,
-          fullName: isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0],
-          role: isAdminCandidate ? UserRole.PDG : UserRole.CHAUFFEUR,
+          fullName: userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1),
+          role: inferredRole,
         };
         
         console.log('AuthProvider: Setting fallback user:', fallbackUser);
         (window as any).dbs_user = fallbackUser;
         setUser(fallbackUser);
       } else {
-        const profile = data[0];
         console.log('AuthProvider: Found profile in DB:', profile);
         
-        const rawRole = profile.role || (isAdminCandidate ? 'PDG' : 'CHAUFFEUR');
+        const rawRole = profile.role || inferredRole;
         const normalizedRole = rawRole.toUpperCase().replace(' ', '_') as UserRole;
         
         const validRoles = Object.values(UserRole) as string[];
-        const finalRole = validRoles.includes(normalizedRole) ? normalizedRole : (isAdminCandidate ? UserRole.PDG : UserRole.CHAUFFEUR);
+        const finalRole = validRoles.includes(normalizedRole) ? (normalizedRole as UserRole) : inferredRole;
 
         const dbUser: UserProfile = {
           id: profile.id,
           email: profile.email || userEmail,
-          fullName: profile.full_name || (isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0]),
+          fullName: profile.full_name || userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1),
           role: finalRole,
           gareId: profile.gare_id,
           avatarUrl: profile.avatar_url,
@@ -160,12 +152,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const fallbackUser: UserProfile = {
         id: userId,
         email: userEmail,
-        fullName: isAdminCandidate ? 'Administrateur' : userEmail.split('@')[0],
-        role: isAdminCandidate ? UserRole.PDG : UserRole.CHAUFFEUR,
+        fullName: userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1),
+        role: inferredRole,
       };
       
       console.log('AuthProvider: Applying emergency fallback:', fallbackUser);
       setUser(fallbackUser);
+    } finally {
+      setLoading(false);
     }
   };
 
