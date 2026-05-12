@@ -49,7 +49,7 @@ export default function LoginPage() {
         <img 
           src="/background.png" 
           alt="Transport Background" 
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
 
