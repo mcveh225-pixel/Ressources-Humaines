@@ -60,6 +60,7 @@ export default function App() {
               <Route path="/notes" element={<DashboardPage />} />
               <Route path="/gare" element={<DashboardPage />} />
               <Route path="/voyages" element={<DashboardPage />} />
+              <Route path="/checking" element={<DashboardPage />} />
               <Route path="/mon-vehicule" element={<DashboardPage />} />
               <Route path="/admin/accounts" element={<DashboardPage />} />
               <Route path="/maintenance" element={<DashboardPage />} />

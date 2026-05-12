@@ -222,10 +222,8 @@ export function AccountsDashboard() {
         </div>
         
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 rounded-xl px-6 h-12">
+          <DialogTrigger render={<Button className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 rounded-xl px-6 h-12" />}>
               <UserPlus className="h-5 w-5" /> Créer un accès
-            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
             <DialogHeader>
@@ -275,7 +273,7 @@ export function AccountsDashboard() {
                       <SelectValue placeholder="Rôle" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {Object.values(UserRole).filter(r => r !== UserRole.CHAUFFEUR).map((role) => (
+                      {Object.values(UserRole).map((role) => (
                         <SelectItem key={role} value={role} className="rounded-lg">{role}</SelectItem>
                       ))}
                     </SelectContent>

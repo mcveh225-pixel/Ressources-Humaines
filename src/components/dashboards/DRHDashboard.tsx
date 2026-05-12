@@ -597,10 +597,11 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
       doc.text(`Date d'export: ${new Date().toLocaleDateString()}`, 14, 30);
       doc.text(`Total employés: ${filteredEmployees.length}`, 14, 35);
       
-      const head = [['Matricule', 'Nom Complet', 'Rôle', 'Service', 'Assignation']];
+      const head = [['Matricule', 'Nom Complet', 'Téléphone', 'Rôle', 'Service', 'Assignation']];
       const body = filteredEmployees.map(emp => [
         emp.matricule,
         emp.full_name,
+        emp.phone || 'N/A',
         emp.role,
         emp.service,
         emp.gare_id || 'Admin'
@@ -663,10 +664,12 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                   <FileText className="h-5 w-5 text-rose-500" />
                   PDF
                 </Button>
-                <Button onClick={() => setIsAddDialogOpen(true)} className="rounded-2xl h-12 px-6 gap-2 bg-primary hover:bg-primary/90 shrink-0">
-                  <UserPlus className="h-5 w-5" />
-                  Nouveau
-                </Button>
+                {user?.role !== UserRole.PDG && (
+                  <Button onClick={() => setIsAddDialogOpen(true)} className="rounded-2xl h-12 px-6 gap-2 bg-primary hover:bg-primary/90 shrink-0">
+                    <UserPlus className="h-5 w-5" />
+                    Nouveau
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -1002,8 +1005,8 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
         employee={selectedEmployee} 
         open={isCardOpen} 
         onOpenChange={setIsCardOpen}
-        onDelete={confirmDelete}
-        onEdit={startEdit}
+        onDelete={user?.role !== UserRole.PDG ? confirmDelete : undefined}
+        onEdit={user?.role !== UserRole.PDG ? startEdit : undefined}
       />
 
       {/* Delete Confirmation Dialog */}

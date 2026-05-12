@@ -9,6 +9,7 @@ import { ServiceTechniqueDashboard } from '@/components/dashboards/ServiceTechni
 import { ChefDeGareDashboard } from '@/components/dashboards/ChefDeGareDashboard';
 import { ChauffeurDashboard } from '@/components/dashboards/ChauffeurDashboard';
 import { AccountsDashboard } from '@/components/dashboards/AccountsDashboard';
+import { CheckingDashboard } from '@/components/dashboards/CheckingDashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShieldAlert, Bus } from 'lucide-react';
@@ -81,6 +82,9 @@ export default function Dashboard() {
     }
     if (path.startsWith('/voyages') || path.startsWith('/mon-vehicule')) {
       return <ChauffeurDashboard />;
+    }
+    if (path.startsWith('/checking')) {
+      return <CheckingDashboard />;
     }
     if (path.startsWith('/admin/accounts')) {
       return <AccountsDashboard />;

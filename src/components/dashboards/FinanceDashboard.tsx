@@ -41,6 +41,21 @@ import {
   X,
   LogOut
 } from "lucide-react";
+import { 
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -75,6 +90,8 @@ import { cn } from '@/lib/utils';
 import { GARES } from '@/constants';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/AuthProvider';
+import { UserRole } from '@/types';
 
 // --- Types ---
 interface ServiceBilan {
@@ -100,12 +117,41 @@ interface Gare {
 }
 
 // --- Mock Data ---
+const FINANCE_CHART_DATA = [
+  { month: 'Jan', income: 12500000, expenses: 8400000 },
+  { month: 'Fév', income: 15200000, expenses: 9100000 },
+  { month: 'Mar', income: 11800000, expenses: 7800000 },
+  { month: 'Avr', income: 14600000, expenses: 10200000 },
+  { month: 'Mai', income: 18900000, expenses: 11500000 },
+  { month: 'Juin', income: 16400000, expenses: 9800000 },
+];
+
+const EXPENSE_CATEGORIES = [
+  { name: 'Carburant', value: 4500000, color: '#f43f5e' },
+  { name: 'Salaires', value: 3200000, color: '#3b82f6' },
+  { name: 'Maintenance', value: 1500000, color: '#f59e0b' },
+  { name: 'Logistique', value: 600000, color: '#10b981' },
+];
+
 const MOCK_DEPENSES = [
   { id: '1', date: '08/07/2026', category: 'Carburant', description: 'Plein Gazoil DBS-004', amount: 45000, status: 'Validé' },
   { id: '2', date: '08/07/2026', category: 'Maintenance', description: 'Réparation pneu bus Adjamé', amount: 15000, status: 'Validé' },
   { id: '3', date: '07/07/2026', category: 'Logistique', description: 'Papier rame guichets Yopougon', amount: 25000, status: 'En attente' },
   { id: '4', date: '07/07/2026', category: 'Divers', description: 'Achat ampoules gare Man', amount: 8500, status: 'Validé' },
   { id: '5', date: '06/07/2026', category: 'Salaire', description: 'Avance sur salaire Chauffeur B.', amount: 50000, status: 'Validé' },
+];
+
+const MOCK_SUPPLIERS = [
+  { id: '1', name: 'PETRO-IVOIRE', category: 'Carburant', balance: 1250000, status: 'Actif' },
+  { id: '2', name: 'SOCOCE', category: 'Fournitures', balance: 45000, status: 'Actif' },
+  { id: '3', name: 'EQUIP-PRO', category: 'Maintenance', balance: 890000, status: 'Relance' },
+  { id: '4', name: 'CIE', category: 'Utilités', balance: 120000, status: 'Payé' },
+];
+
+const MOCK_ALERTS = [
+  { id: 1, type: 'critical', title: 'Solde Caisse Faible (Gare Man)', date: 'Il y a 10 min', description: 'Le solde actuel est inférieur au seuil de sécurité de 50,000 FCFA.' },
+  { id: 2, type: 'warning', title: 'Facture Fournisseur en Attente', date: 'Il y a 2h', description: 'La facture EQUIP-PRO n°892 est en attente depuis 5 jours.' },
+  { id: 3, type: 'info', title: 'Versement Gare Korhogo Validé', date: 'Hier', description: 'Le versement de 450,000 FCFA a été confirmé par la banque.' },
 ];
 
 const menuConfig = [
@@ -338,6 +384,7 @@ const RecentRecettesList = ({ refreshRecent, formatFCFA }: { refreshRecent: numb
 };
 
 export function FinanceDashboard() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const sub = searchParams.get('sub') || 'vue-generale';
   
@@ -716,7 +763,364 @@ export function FinanceDashboard() {
               )}
 
               {/* Placeholder for other sections */}
-              {(activeSection !== 'dashboard' || activeSubSection !== 'vue-generale') && (
+              {activeSubSection === 'resume-recettes-depenses' && (
+                <div className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <Card className="border-none shadow-sm rounded-[2rem] p-6 bg-white overflow-hidden relative">
+                      <div className="absolute -right-6 -top-6 h-24 w-24 bg-emerald-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Marge Nette</p>
+                        <p className="text-2xl font-black text-emerald-600 mt-2">41.2%</p>
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-500 mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-full">
+                          <TrendingUp className="h-3 w-3" /> +2.4% vs mois dernier
+                        </div>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-sm rounded-[2rem] p-6 bg-white overflow-hidden relative">
+                      <div className="absolute -right-6 -top-6 h-24 w-24 bg-blue-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Revenu Moyen / Bus</p>
+                        <p className="text-2xl font-black text-blue-600 mt-2">1,240K</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Basé sur 18 bus actifs</p>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-sm rounded-[2rem] p-6 bg-white overflow-hidden relative">
+                      <div className="absolute -right-6 -top-6 h-24 w-24 bg-rose-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Points de Frais Max</p>
+                        <p className="text-2xl font-black text-rose-600 mt-2">Carburant</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">45% des dépenses totales</p>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-sm rounded-[2rem] p-6 bg-white overflow-hidden relative">
+                      <div className="absolute -right-6 -top-6 h-24 w-24 bg-amber-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Croissance</p>
+                        <p className="text-2xl font-black text-amber-600 mt-2">+15.8%</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Trimestre en cours</p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  <div className="grid lg:grid-cols-3 gap-8">
+                    <Card className="lg:col-span-2 border-none shadow-xl shadow-slate-200/50 bg-white rounded-[3rem] overflow-hidden">
+                      <CardHeader className="p-10 border-b border-slate-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">Analyse Comparative</CardTitle>
+                            <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mt-2">Performance Recettes vs Dépenses (6 mois)</CardDescription>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <div className="flex items-center gap-2">
+                               <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                               <span className="text-[9px] font-black uppercase text-slate-400">Recettes</span>
+                             </div>
+                             <div className="flex items-center gap-2">
+                               <div className="h-3 w-3 rounded-full bg-rose-400" />
+                               <span className="text-[9px] font-black uppercase text-slate-400">Dépenses</span>
+                             </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-10 pt-8 h-[400px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={FINANCE_CHART_DATA} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis 
+                              dataKey="month" 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                              dy={10}
+                            />
+                            <YAxis 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                            />
+                            <Tooltip 
+                              contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '20px', fontWeight: 'bold'}}
+                              formatter={(value: any) => [formatFCFA(value), '']}
+                            />
+                            <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorIncome)" />
+                            <Area type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={4} fillOpacity={1} fill="url(#colorExpense)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[3rem] overflow-hidden">
+                      <CardHeader className="p-10 border-b border-slate-50">
+                        <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">Répartition Dépenses</CardTitle>
+                        <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mt-2">Détail des coûts opérationnels</CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-10">
+                        <div className="h-[250px] relative">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={EXPENSE_CATEGORIES}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={70}
+                                outerRadius={90}
+                                paddingAngle={8}
+                                dataKey="value"
+                              >
+                                {EXPENSE_CATEGORIES.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{borderRadius: '16px', border: 'none', shadow: 'xl'}}
+                                formatter={(value: any) => formatFCFA(value)}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <p className="text-[10px] font-black text-slate-400 uppercase">Max</p>
+                            <p className="text-lg font-black text-slate-900">4.5M</p>
+                          </div>
+                        </div>
+                        <div className="space-y-4 mt-8">
+                          {EXPENSE_CATEGORIES.map((cat) => (
+                            <div key={cat.name} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider font-mono">{cat.name}</span>
+                              </div>
+                              <span className="text-xs font-black text-slate-900">{formatFCFA(cat.value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {activeSubSection === 'historique-recettes' && (
+                <Card className="border-none shadow-2xl shadow-slate-200/50 bg-white rounded-[3rem] overflow-hidden">
+                  <CardHeader className="p-10 border-b border-slate-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">Historique des Recettes</CardTitle>
+                        <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mt-2">Détail des entrées de caisse validées</CardDescription>
+                      </div>
+                      {user?.role !== UserRole.PDG && (
+                        <Button onClick={() => setIsRegistering(true)} className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 h-12 text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all">
+                          <Plus className="h-4 w-4 mr-2" /> Enregistrer Recette
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <RecentRecettesList refreshRecent={refreshRecent} formatFCFA={formatFCFA} />
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeSubSection === 'alertes-financieres' && (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {MOCK_ALERTS.map((alert) => (
+                    <Card key={alert.id} className={cn(
+                      "border-none shadow-xl rounded-[2.5rem] p-8 transition-all hover:scale-[1.02]",
+                      alert.type === 'critical' ? "bg-rose-50/50" : alert.type === 'warning' ? "bg-amber-50/50" : "bg-blue-50/50"
+                    )}>
+                      <div className="flex items-start justify-between mb-6">
+                        <div className={cn(
+                          "p-4 rounded-2xl",
+                          alert.type === 'critical' ? "bg-rose-100 text-rose-600" : alert.type === 'warning' ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
+                        )}>
+                          {alert.type === 'critical' ? <AlertCircle className="h-6 w-6" /> : alert.type === 'warning' ? <Clock className="h-6 w-6" /> : <Bell className="h-6 w-6" />}
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{alert.date}</span>
+                      </div>
+                      <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{alert.title}</h4>
+                      <p className="text-xs font-medium text-slate-500 mt-4 leading-relaxed">{alert.description}</p>
+                      <Button variant="link" className={cn(
+                        "mt-6 p-0 h-auto font-black uppercase text-[10px] tracking-widest",
+                        alert.type === 'critical' ? "text-rose-600" : alert.type === 'warning' ? "text-amber-600" : "text-blue-600"
+                      )}>
+                        Traiter l'alerte <ChevronRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {activeSubSection === 'depenses' && (
+                <Card className="border-none shadow-2xl shadow-slate-200/50 bg-white rounded-[3rem] overflow-hidden">
+                  <CardHeader className="p-10 border-b border-slate-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">Registre des Dépenses</CardTitle>
+                        <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mt-2">Suivi des flux sortants</CardDescription>
+                      </div>
+                      {user?.role !== UserRole.PDG && (
+                        <Button onClick={() => setIsRegisteringDepense(true)} className="rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black px-6 h-12 text-[10px] uppercase tracking-widest shadow-lg shadow-rose-100 transition-all">
+                          <Plus className="h-4 w-4 mr-2" /> Nouvelle Dépense
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50">
+                        <TableRow className="hover:bg-transparent border-none">
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Description</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Catégorie</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Gare</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Montant</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {depenses.map((dep) => (
+                          <TableRow key={dep.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors group">
+                            <TableCell className="py-6 px-10 font-bold text-slate-500 text-xs">{new Date(dep.date).toLocaleDateString()}</TableCell>
+                            <TableCell className="py-6 px-10">
+                              <p className="font-black text-slate-900 text-sm group-hover:text-primary transition-colors">{dep.description}</p>
+                            </TableCell>
+                            <TableCell className="py-6 px-10">
+                              <Badge variant="outline" className="bg-slate-50 text-slate-400 border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
+                                {dep.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-6 px-10 font-bold text-slate-500 text-xs">{dep.gares?.name || 'Caisse Centrale'}</TableCell>
+                            <TableCell className="py-6 px-10 text-right font-black text-slate-900 text-sm">
+                              {formatFCFA(dep.amount)}
+                            </TableCell>
+                            <TableCell className="py-6 px-10 text-center">
+                              <Badge className={cn(
+                                "border-none font-black text-[9px] uppercase tracking-widest px-3 h-6",
+                                dep.status === 'Validé' ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                              )}>
+                                {dep.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeSubSection === 'tresorerie' && (
+                <div className="space-y-10">
+                  <div className="grid md:grid-cols-3 gap-8">
+                    <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[3rem] p-10 relative overflow-hidden">
+                      <div className="absolute -right-12 -bottom-12 h-40 w-40 bg-emerald-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-8">
+                          <Banknote className="h-7 w-7" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Liquidités Totales</p>
+                        <p className="text-3xl font-black text-emerald-600 mt-2">45,850,000 <span className="text-xs">F</span></p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Disponible immédiatement</p>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[3rem] p-10 relative overflow-hidden">
+                      <div className="absolute -right-12 -bottom-12 h-40 w-40 bg-blue-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <div className="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-8">
+                          <Building2 className="h-7 w-7" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Comptes Bancaires</p>
+                        <p className="text-3xl font-black text-blue-600 mt-2">128,400,000 <span className="text-xs">F</span></p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Réparti sur 4 comptes</p>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[3rem] p-10 relative overflow-hidden">
+                      <div className="absolute -right-12 -bottom-12 h-40 w-40 bg-rose-50 rounded-full opacity-50" />
+                      <div className="relative z-10">
+                        <div className="h-14 w-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-8">
+                          <TrendingDown className="h-7 w-7" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Engagements (30j)</p>
+                        <p className="text-3xl font-black text-rose-600 mt-2">12,150,000 <span className="text-xs">F</span></p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Fournisseurs & Salaires</p>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {activeSubSection === 'liste-fournisseurs' && (
+                <Card className="border-none shadow-2xl shadow-slate-200/50 bg-white rounded-[3rem] overflow-hidden">
+                  <CardHeader className="p-10 border-b border-slate-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">Gestion Fournisseurs</CardTitle>
+                        <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mt-2">Répertoire des partenaires commerciaux</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50">
+                        <TableRow className="hover:bg-transparent border-none">
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Nom</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Catégorie</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400">Solde Dû</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
+                          <TableHead className="py-6 px-10 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {MOCK_SUPPLIERS.map((sup) => (
+                          <TableRow key={sup.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors group">
+                            <TableCell className="py-6 px-10">
+                              <p className="font-black text-slate-900 text-sm">{sup.name}</p>
+                            </TableCell>
+                            <TableCell className="py-6 px-10">
+                              <Badge variant="outline" className="bg-slate-50 text-slate-400 border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
+                                {sup.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-6 px-10 font-bold text-slate-900 text-sm">
+                              {formatFCFA(sup.balance)}
+                            </TableCell>
+                            <TableCell className="py-6 px-10 text-center">
+                              <Badge className={cn(
+                                "border-none font-black text-[9px] uppercase tracking-widest px-3 h-6",
+                                sup.status === 'Actif' ? "bg-emerald-50 text-emerald-600" : sup.status === 'Relance' ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600"
+                              )}>
+                                {sup.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-6 px-10 text-right">
+                              <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-primary/5 text-primary">
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {(activeSubSection !== 'resume-recettes-depenses' && 
+                activeSubSection !== 'alertes-financieres' && 
+                activeSubSection !== 'depenses' && 
+                activeSubSection !== 'tresorerie' && 
+                activeSubSection !== 'liste-fournisseurs' && 
+                (activeSection !== 'dashboard' || activeSubSection !== 'vue-generale')) && (
                 <div className="bg-white rounded-[3rem] p-20 text-center space-y-6 shadow-sm border-2 border-slate-50 border-dashed">
                   <div className="h-24 w-24 bg-slate-50 text-slate-200 rounded-[2rem] flex items-center justify-center mx-auto">
                     {menuConfig.find(m => m.id === activeSection)?.icon}
@@ -735,156 +1139,154 @@ export function FinanceDashboard() {
       </main>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-10 right-10 flex gap-4 z-50">
-        <Dialog open={isRegistering} onOpenChange={setIsRegistering}>
-          <DialogTrigger asChild>
-            <Button className="h-16 w-16 rounded-[2rem] bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 p-0 flex items-center justify-center">
-              <TrendingUp className="h-8 w-8" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
-            <div className="bg-emerald-600 p-8 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-black flex items-center gap-3">
-                  <Receipt className="h-6 w-6" />
-                  NOUVELLE RECETTE
-                </DialogTitle>
-                <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-emerald-100 opacity-80 mt-2">
-                  Enregistrement d'une entrée de caisse
-                </CardDescription>
-              </DialogHeader>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="gare" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gare concernée</Label>
-                <Select 
-                  value={newRecette.gare_id} 
-                  onValueChange={(val) => setNewRecette({...newRecette, gare_id: val})}
+      {user?.role !== UserRole.PDG && (
+        <div className="fixed bottom-10 right-10 flex gap-4 z-50">
+          <Dialog open={isRegistering} onOpenChange={setIsRegistering}>
+            <DialogTrigger render={<Button className="h-16 w-16 rounded-[2rem] bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 p-0 flex items-center justify-center" />}>
+                <TrendingUp className="h-8 w-8" />
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+              <div className="bg-emerald-600 p-8 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-black flex items-center gap-3">
+                    <Receipt className="h-6 w-6" />
+                    NOUVELLE RECETTE
+                  </DialogTitle>
+                  <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-emerald-100 opacity-80 mt-2">
+                    Enregistrement d'une entrée de caisse
+                  </CardDescription>
+                </DialogHeader>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="grid gap-2">
+                  <Label htmlFor="gare" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gare concernée</Label>
+                  <Select 
+                    value={newRecette.gare_id} 
+                    onValueChange={(val) => setNewRecette({...newRecette, gare_id: val})}
+                  >
+                    <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold focus:ring-emerald-500">
+                      <SelectValue placeholder="Choisir une gare..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
+                      {gares.map(g => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="service" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Service</Label>
+                    <Select 
+                      value={newRecette.service} 
+                      onValueChange={(val) => setNewRecette({...newRecette, service: val})}
+                    >
+                      <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold">
+                        <SelectValue placeholder="Service" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
+                        <SelectItem value="Guichet">Guichet</SelectItem>
+                        <SelectItem value="Courrier">Courrier</SelectItem>
+                        <SelectItem value="Bagage">Bagage</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montant (FCFA)</Label>
+                    <Input 
+                      id="amount" 
+                      type="number" 
+                      placeholder="0"
+                      value={newRecette.amount}
+                      onChange={(e) => setNewRecette({...newRecette, amount: e.target.value})}
+                      className="rounded-xl h-12 border-slate-100 bg-slate-50 font-black text-lg"
+                    />
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleAddRecette} 
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 h-14 font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-100 mt-4"
                 >
-                  <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold focus:ring-emerald-500">
-                    <SelectValue placeholder="Choisir une gare..." />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
-                    {gares.map(g => (
-                      <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
+                  Valider l'enregistrement
+                </Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+            </DialogContent>
+          </Dialog>
+  
+          <Dialog open={isRegisteringDepense} onOpenChange={setIsRegisteringDepense}>
+            <DialogTrigger render={<Button className="h-16 w-16 rounded-[2rem] bg-rose-600 hover:bg-rose-700 text-white shadow-2xl shadow-rose-200 p-0 flex items-center justify-center" />}>
+                <TrendingDown className="h-8 w-8" />
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+              <div className="bg-rose-600 p-8 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black flex items-center gap-3">
+                    <ArrowDownRight className="h-6 w-6" />
+                    NOUVELLE DÉPENSE
+                  </DialogTitle>
+                  <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-rose-100 opacity-80 mt-2">
+                    Précisez la nature et le montant
+                  </CardDescription>
+                </DialogHeader>
+              </div>
+              <div className="p-8 space-y-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="service" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Service</Label>
-                  <Select 
-                    value={newRecette.service} 
-                    onValueChange={(val) => setNewRecette({...newRecette, service: val})}
-                  >
-                    <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold">
-                      <SelectValue placeholder="Service" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
-                      <SelectItem value="Guichet">Guichet</SelectItem>
-                      <SelectItem value="Courrier">Courrier</SelectItem>
-                      <SelectItem value="Bagage">Bagage</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montant (FCFA)</Label>
+                  <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Description / Nature</Label>
                   <Input 
-                    id="amount" 
-                    type="number" 
-                    placeholder="0"
-                    value={newRecette.amount}
-                    onChange={(e) => setNewRecette({...newRecette, amount: e.target.value})}
-                    className="rounded-xl h-12 border-slate-100 bg-slate-50 font-black text-lg"
+                    id="description" 
+                    placeholder="Nature de la dépense..."
+                    value={newDepense.description}
+                    onChange={(e) => setNewDepense({...newDepense, description: e.target.value})}
+                    className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold"
                   />
                 </div>
-              </div>
-              <Button 
-                onClick={handleAddRecette} 
-                disabled={isSubmitting}
-                className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 h-14 font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-100 mt-4"
-              >
-                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
-                Valider l'enregistrement
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isRegisteringDepense} onOpenChange={setIsRegisteringDepense}>
-          <DialogTrigger asChild>
-            <Button className="h-16 w-16 rounded-[2rem] bg-rose-600 hover:bg-rose-700 text-white shadow-2xl shadow-rose-200 p-0 flex items-center justify-center">
-              <TrendingDown className="h-8 w-8" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
-            <div className="bg-rose-600 p-8 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-black flex items-center gap-3">
-                  <ArrowDownRight className="h-6 w-6" />
-                  NOUVELLE DÉPENSE
-                </DialogTitle>
-                <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-rose-100 opacity-80 mt-2">
-                  Précisez la nature et le montant
-                </CardDescription>
-              </DialogHeader>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Description / Nature</Label>
-                <Input 
-                  id="description" 
-                  placeholder="Nature de la dépense..."
-                  value={newDepense.description}
-                  onChange={(e) => setNewDepense({...newDepense, description: e.target.value})}
-                  className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="category" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Catégorie</Label>
-                  <Select 
-                    value={newDepense.category} 
-                    onValueChange={(val) => setNewDepense({...newDepense, category: val})}
-                  >
-                    <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold text-xs">
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
-                      <SelectItem value="Carburant">Carburant</SelectItem>
-                      <SelectItem value="Maintenance">Maintenance</SelectItem>
-                      <SelectItem value="Logistique">Logistique</SelectItem>
-                      <SelectItem value="Salaire">Salaire</SelectItem>
-                      <SelectItem value="Loyer">Loyer</SelectItem>
-                      <SelectItem value="Divers">Divers</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="category" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Catégorie</Label>
+                    <Select 
+                      value={newDepense.category} 
+                      onValueChange={(val) => setNewDepense({...newDepense, category: val})}
+                    >
+                      <SelectTrigger className="rounded-xl h-12 border-slate-100 bg-slate-50 font-bold text-xs">
+                        <SelectValue placeholder="Catégorie" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-100 shadow-xl font-bold">
+                        <SelectItem value="Carburant">Carburant</SelectItem>
+                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        <SelectItem value="Logistique">Logistique</SelectItem>
+                        <SelectItem value="Salaire">Salaire</SelectItem>
+                        <SelectItem value="Loyer">Loyer</SelectItem>
+                        <SelectItem value="Divers">Divers</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="depense-amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montant (FCFA)</Label>
+                    <Input 
+                      id="depense-amount" 
+                      type="number" 
+                      placeholder="0"
+                      value={newDepense.amount}
+                      onChange={(e) => setNewDepense({...newDepense, amount: e.target.value})}
+                      className="rounded-xl h-12 border-slate-100 bg-slate-50 font-black text-lg"
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="depense-amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montant (FCFA)</Label>
-                  <Input 
-                    id="depense-amount" 
-                    type="number" 
-                    placeholder="0"
-                    value={newDepense.amount}
-                    onChange={(e) => setNewDepense({...newDepense, amount: e.target.value})}
-                    className="rounded-xl h-12 border-slate-100 bg-slate-50 font-black text-lg"
-                  />
-                </div>
+                <Button 
+                  onClick={handleAddDepense} 
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl bg-rose-600 hover:bg-rose-700 h-14 font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-100 mt-4"
+                >
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
+                  Enregistrer la dépense
+                </Button>
               </div>
-              <Button 
-                onClick={handleAddDepense} 
-                disabled={isSubmitting}
-                className="w-full rounded-2xl bg-rose-600 hover:bg-rose-700 h-14 font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-100 mt-4"
-              >
-                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
-                Enregistrer la dépense
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </div>
   );
 }

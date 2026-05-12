@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('AuthProvider: Fetching profile for:', userId, 'Email:', userEmail, 'Inferred Role:', inferredRole);
     
     try {
-      // Increased timeout to 10s to prevent premature fallbacks on slow networks
+      // Increased timeout to 15s to prevent premature fallbacks on slow networks
       const fetchPromise = supabase
         .from('profiles')
         .select('*')
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 15000)
       );
 
       const { data: profile, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;

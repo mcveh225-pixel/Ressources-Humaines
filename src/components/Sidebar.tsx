@@ -12,6 +12,8 @@ import {
   Clock, 
   MapPin, 
   Settings,
+  AlertTriangle,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   Coins,
@@ -22,7 +24,9 @@ import {
   Banknote,
   Bell,
   Users2,
-  Archive
+  Archive,
+  MessageSquare,
+  User
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { UserRole } from '@/types';
@@ -47,7 +51,7 @@ const navItems: NavItem[] = [
     title: 'Tableau de Bord',
     href: '/',
     icon: LayoutDashboard,
-    roles: [UserRole.PDG, UserRole.DG, UserRole.DRH, UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.CHAUFFEUR, UserRole.POMPISTE],
+    roles: [UserRole.PDG, UserRole.DG, UserRole.DRH, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.POMPISTE],
   },
   {
     title: 'Tableau de Bord',
@@ -186,7 +190,138 @@ const navItems: NavItem[] = [
     title: 'Service Technique',
     href: '/technique',
     icon: Wrench,
-    roles: [UserRole.PDG, UserRole.DG, UserRole.SERVICE_TECHNIQUE],
+    roles: [UserRole.PDG, UserRole.DG],
+  },
+  {
+    title: 'Tableau de Bord',
+    href: '/technique',
+    icon: LayoutDashboard,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    subItems: [
+      { title: 'Vue globale du parc', href: '/technique?sub=vue-globale' },
+      { title: 'Véhicules en panne', href: '/technique?sub=vehicules-panne' },
+      { title: 'Interventions en cours', href: '/technique?sub=interventions-cours' },
+      { title: 'Alertes techniques', href: '/technique?sub=alertes-techniques' },
+    ]
+  },
+  {
+    title: 'Gestion des Véhicules',
+    href: '/technique',
+    icon: Bus,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Liste des véhicules', href: '/technique?sub=liste-vehicules' },
+      { title: 'Kilométrage & Suivi', href: '/technique?sub=kilometrage' },
+      { title: 'Affectation chauffeurs', href: '/technique?sub=affectation-chauffeurs' },
+      { title: 'Documents du véhicule', href: '/technique?sub=documents-vehicule' },
+    ]
+  },
+  {
+    title: 'Maintenance',
+    href: '/technique',
+    icon: Wrench,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Maintenance préventive', href: '/technique?sub=maintenance-preventive' },
+      { title: 'Maintenance corrective', href: '/technique?sub=maintenance-corrective' },
+      { title: 'Calendrier d’entretien', href: '/technique?sub=calendrier-entretien' },
+      { title: 'Contrôles techniques', href: '/technique?sub=controles-techniques' },
+    ]
+  },
+  {
+    title: 'Gestion des Pannes',
+    href: '/technique',
+    icon: AlertTriangle,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Déclaration de panne', href: '/technique?sub=declaration-panne' },
+      { title: 'Suivi des réparations', href: '/technique?sub=suivi-reparations' },
+      { title: 'Véhicules immobilisés', href: '/technique?sub=vehicules-immobilises' },
+    ]
+  },
+  {
+    title: 'Techniciens',
+    href: '/technique',
+    icon: Users2,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Liste des techniciens', href: '/technique?sub=liste-techniciens' },
+      { title: 'Planning des équipes', href: '/technique?sub=planning-techniciens' },
+    ]
+  },
+  {
+    title: 'Interventions',
+    href: '/technique',
+    icon: CheckCircle2,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Interventions en attente', href: '/technique?sub=interventions-attente' },
+      { title: 'Interventions terminées', href: '/technique?sub=interventions-terminees' },
+      { title: 'Rapports d’intervention', href: '/technique?sub=rapports-intervention' },
+    ]
+  },
+  {
+    title: 'Pièces de Rechange',
+    href: '/technique',
+    icon: Package2,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Stock des pièces', href: '/technique?sub=stock-pieces' },
+      { title: 'Fournisseurs', href: '/technique?sub=fournisseurs-pieces' },
+      { title: 'Inventaire', href: '/technique?sub=inventaire-pieces' },
+    ]
+  },
+  {
+    title: 'Budget & Dépenses',
+    href: '/technique',
+    icon: Wallet,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Coût des réparations', href: '/technique?sub=cout-reparations' },
+      { title: 'Budget maintenance', href: '/technique?sub=budget-maintenance' },
+      { title: 'Historique financier', href: '/technique?sub=historique-financier' },
+    ]
+  },
+  {
+    title: 'Consommation',
+    href: '/technique',
+    icon: Fuel,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Suivi carburant', href: '/technique?sub=suivi-carburant' },
+      { title: 'Analyse des coûts', href: '/technique?sub=analyse-conso' },
+    ]
+  },
+  {
+    title: 'Rapports & Stats',
+    href: '/technique',
+    icon: BarChart3,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Rapport mensuel', href: '/technique?sub=rapport-mensuel-technique' },
+      { title: 'Taux de panne', href: '/technique?sub=taux-panne' },
+      { title: 'Disponibilité flotte', href: '/technique?sub=disponibilite-flotte' },
+    ]
+  },
+  {
+    title: 'Paramètres',
+    href: '/technique',
+    icon: Settings,
+    roles: [UserRole.SERVICE_TECHNIQUE],
+    section: 'SERVICE TECHNIQUE',
+    subItems: [
+      { title: 'Types de maintenance', href: '/technique?sub=types-maintenance' },
+      { title: 'Catégories de pannes', href: '/technique?sub=categories-pannes' },
+    ]
   },
   {
     title: 'Accès Comptes',
@@ -205,12 +340,16 @@ const navItems: NavItem[] = [
     href: '/gare',
     icon: MapPin,
     roles: [UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.PDG],
+    subItems: [
+      { title: 'Vue générale', href: '/gare?sub=vue-generale' },
+      { title: 'Le Personnel', href: '/gare?sub=personnel' },
+    ]
   },
   {
     title: 'Voyages',
     href: '/voyages',
     icon: Bus,
-    roles: [UserRole.CHAUFFEUR, UserRole.PDG],
+    roles: [UserRole.PDG],
   },
   {
     title: 'Absences/Retards',
@@ -222,7 +361,78 @@ const navItems: NavItem[] = [
     title: 'Maintenance',
     href: '/maintenance',
     icon: Settings,
-    roles: [UserRole.SERVICE_TECHNIQUE, UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.PDG],
+    roles: [UserRole.CHEF_DE_GARE, UserRole.CHEF_DE_GARE_ADJOINT, UserRole.PDG],
+  },
+  // --- CHAUFFEUR MENU ---
+  {
+    title: 'Accueil',
+    href: '/',
+    icon: LayoutDashboard,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Voyages',
+    href: '/voyages',
+    icon: Bus,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Checking',
+    href: '/checking',
+    icon: CheckCircle2,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Pannes',
+    href: '/pannes',
+    icon: AlertTriangle,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Carburant',
+    href: '/carburant',
+    icon: Fuel,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Trajet',
+    href: '/trajet',
+    icon: MapPin,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Maintenance',
+    href: '/maintenance',
+    icon: Wrench,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Messages',
+    href: '/messages',
+    icon: MessageSquare,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
+  },
+  {
+    title: 'Profil',
+    href: '/profile',
+    icon: User,
+    roles: [UserRole.CHAUFFEUR],
+    section: 'MENU CHAUFFEUR'
   }
 ];
 

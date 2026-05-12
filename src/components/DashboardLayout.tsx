@@ -43,10 +43,8 @@ export function DashboardLayout() {
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center h-16 px-4 border-b bg-sidebar text-sidebar-foreground">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent">
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent" />}>
                 <Menu className="h-6 w-6" />
-              </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 border-r-0">
               <Sidebar className="w-full" />
