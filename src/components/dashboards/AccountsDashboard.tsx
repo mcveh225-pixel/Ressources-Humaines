@@ -398,14 +398,14 @@ export function AccountsDashboard() {
 
           <QRCodeGenerator 
             url={registrationUrl} 
-            title="S'inscrire" 
-            description="Lien pour les nouveaux employés" 
+            title="Activation de Compte" 
+            description="Scannez pour votre 1ère connexion" 
           />
 
           <QRCodeGenerator 
             url={`${customBaseUrl || window.location.origin}/#/login`} 
-            title="Se Connecter" 
-            description="Connexion rapide par Matricule" 
+            title="Connexion Rapide" 
+            description="Pour les employés déjà activés" 
           />
           
           <Card className="border-none shadow-sm bg-slate-900 text-white rounded-[2rem]">

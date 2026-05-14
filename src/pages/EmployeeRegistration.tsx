@@ -33,65 +33,77 @@ export default function EmployeeRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    matricule: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: UserRole.CHAUFFEUR,
-    gare_id: ''
-  });
+  const [matricule, setMatricule] = useState('');
+  const [phone, setPhone] = useState('');
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas.");
-      return;
-    }
-
     setLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+      const cleanMatricule = matricule.trim().toUpperCase();
+      const cleanPhone = phone.trim().replace(/\s/g, '');
+
+      // 1. Check if employee exists in HR records
+      const { data: employee, error: empError } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('matricule', cleanMatricule)
+        .eq('phone', cleanPhone)
+        .single();
+
+      if (empError || !employee) {
+        toast.error("Données incorrectes. Veuillez vérifier votre matricule et votre numéro ou contacter le DRH.");
+        return;
+      }
+
+      // 2. Create Auth Account
+      const loginEmail = `${cleanMatricule.toLowerCase()}@dbs-ban.ci`;
+      const loginPassword = cleanMatricule;
+
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: loginEmail,
+        password: loginPassword,
         options: {
           data: {
-            full_name: formData.fullName,
-            role: formData.role,
-            matricule: formData.matricule,
-            phone: formData.phone,
-            gare_id: formData.gare_id
+            full_name: employee.full_name,
+            role: employee.role,
+            matricule: cleanMatricule,
+            phone: cleanPhone,
+            gare_id: employee.gare_id
           }
         }
       });
 
-      if (error) throw error;
+      if (signUpError) {
+        if (signUpError.message.includes('User already registered')) {
+          toast.info("Compte déjà activé. Redirection vers la connexion...");
+          navigate('/login');
+          return;
+        }
+        throw signUpError;
+      }
 
-      if (data.user) {
-        // Now update the profile with matricule and phone
+      if (authData.user) {
+        // 3. Update profile
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
-            full_name: formData.fullName,
-            role: formData.role,
-            matricule: formData.matricule,
-            phone: formData.phone,
-            gare_id: formData.gare_id
+            full_name: employee.full_name,
+            role: employee.role,
+            matricule: cleanMatricule,
+            phone: cleanPhone,
+            gare_id: employee.gare_id
           })
-          .eq('id', data.user.id);
+          .eq('id', authData.user.id);
 
-        if (profileError) {
-          console.warn("Profile update failed, but auth was created:", profileError);
-        }
+        if (profileError) console.warn("Profile sync issue:", profileError);
 
         setSuccess(true);
-        toast.success("Compte créé avec succès !");
+        toast.success("Compte activé avec succès !");
       }
     } catch (err: any) {
-      toast.error("Erreur d'inscription: " + err.message);
+      toast.error("Erreur d'activation: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -99,210 +111,102 @@ export default function EmployeeRegistration() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full"
+          className="max-w-md w-full text-center space-y-8"
         >
-          <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white text-center p-12 space-y-8">
-            <div className="h-24 w-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-12 w-12" />
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-black text-slate-900 uppercase">Bienvenue !</h1>
-              <p className="text-slate-500 font-medium">
-                Votre compte employé a été créé avec succès. Vous pouvez maintenant vous connecter.
-              </p>
-            </div>
-            <Button 
-              onClick={() => navigate('/login')}
-              className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest"
-            >
-              Aller à la Connexion
-            </Button>
-          </Card>
+          <div className="h-24 w-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="h-12 w-12" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black text-slate-900 uppercase">Compte Activé !</h1>
+            <p className="text-slate-500 font-bold">
+              Bienvenue chez DBS. Votre compte est maintenant prêt.
+            </p>
+          </div>
+          <Button 
+            onClick={() => navigate('/login')}
+            className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-100"
+          >
+            Se Connecter
+          </Button>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 py-12">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-xl w-full"
+        className="max-w-md w-full"
       >
-        <div className="flex flex-col items-center mb-10 text-center space-y-4">
-          <div className="h-16 w-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl">
-             <Bus className="h-10 w-10" />
+        <div className="flex flex-col items-center mb-8 text-center space-y-3">
+          <div className="h-14 w-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+             <Bus className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">DIOMANDE BAN SERVICE</h1>
-            <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.3em] mt-1">Espace Recrutement Employés</p>
+            <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">Activer mon compte</h1>
+            <p className="text-slate-500 font-black uppercase text-[8px] tracking-[0.3em] mt-1">Personnel DIOMANDE BAN SERVICE</p>
           </div>
         </div>
 
-        <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
-          <CardContent className="p-10 md:p-16">
-            <h2 className="text-2xl font-black text-slate-900 mb-8 uppercase tracking-tight">Créer mon compte</h2>
-            
-            <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
+          <CardContent className="p-8 md:p-10">
+            <form onSubmit={handleActivate} className="space-y-6">
               
-              {/* Photo Placeholder */}
-              <div className="md:col-span-2 flex justify-center mb-4">
-                <div className="h-28 w-28 bg-slate-50 rounded-full border-4 border-slate-100 flex flex-col items-center justify-center text-slate-400 group cursor-pointer hover:bg-blue-50 hover:border-blue-100 transition-all">
-                  <Camera className="h-8 w-8 mb-1" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">Ajouter Photo</span>
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Nom Complet</Label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                    placeholder="Bamba Souleymane" 
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900" 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Matricule</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Matricule Employé</Label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
                     required
-                    value={formData.matricule}
-                    onChange={(e) => setFormData({...formData, matricule: e.target.value})}
-                    placeholder="DBS-2026-001" 
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900 uppercase" 
+                    value={matricule}
+                    onChange={(e) => setMatricule(e.target.value)}
+                    placeholder="Ex: DBS-2026-001" 
+                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-black text-slate-900 uppercase" 
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Numéro de téléphone</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Numéro de téléphone</Label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
                     required
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    placeholder="07 00 00 00 00" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Ex: 0707070707" 
                     className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900" 
                   />
                 </div>
+                <p className="text-[9px] text-slate-400 font-bold italic ml-1">
+                  Utilisez le numéro communiqué au DRH lors de votre enregistrement.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
-                    required
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="mon-email@dbs.ci" 
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900" 
-                  />
-                </div>
-              </div>
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-3 transition-all active:scale-95"
+              >
+                {loading ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <>
+                    Vérifier et Activer <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </Button>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
-                    required
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="••••••••" 
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900" 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Confirmer</Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
-                    required
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                    placeholder="••••••••" 
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900" 
-                  />
-                </div>
-              </div>
-
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Poste occupé</Label>
-                  <Select
-                    value={formData.role}
-                    onValueChange={(value) => setFormData({...formData, role: value as UserRole})}
-                  >
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900">
-                      <SelectValue placeholder="Choisir un poste" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-xl">
-                      <SelectItem value={UserRole.CHAUFFEUR} className="font-bold py-3">Chauffeur</SelectItem>
-                      <SelectItem value={UserRole.POMPISTE} className="font-bold py-3">Pompiste</SelectItem>
-                      <SelectItem value={UserRole.SERVICE_TECHNIQUE} className="font-bold py-3">Service Technique</SelectItem>
-                      <SelectItem value={UserRole.GUICHETIER} className="font-bold py-3">Guichetier / Clientèle</SelectItem>
-                      <SelectItem value={UserRole.MECANICIEN || 'MECANICIEN'} className="font-bold py-3">Mécanicien</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Gare d'attache</Label>
-                  <Select
-                    value={formData.gare_id}
-                    onValueChange={(value) => setFormData({...formData, gare_id: value})}
-                  >
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900">
-                      <SelectValue placeholder="Votre gare DBS" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-xl">
-                      {GARES.map(gare => (
-                        <SelectItem key={gare.id} value={gare.id} className="font-bold py-3">{gare.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 pt-6">
-                <Button 
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
-                >
-                  {loading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <>
-                      Finaliser mon inscription <ArrowRight className="h-5 w-5" />
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <div className="md:col-span-2 text-center pt-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Déjà un compte ? <span onClick={() => navigate('/login')} className="text-blue-600 cursor-pointer hover:underline">Se connecter</span>
+              <div className="text-center pt-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Déjà activé ? <span onClick={() => navigate('/login')} className="text-blue-600 cursor-pointer hover:underline">Se connecter</span>
                 </p>
               </div>
 
