@@ -174,9 +174,9 @@ function StatCard({ title, value, unit, change, trend, icon: Icon, description, 
             {unit && <span className="text-[10px] font-black text-slate-300">{unit}</span>}
           </div>
         </div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase mt-4 tracking-widest flex items-center gap-1">
+        <div className="text-[10px] font-bold text-slate-400 uppercase mt-4 tracking-widest flex items-center gap-1">
           <div className="h-1 w-1 rounded-full bg-slate-300" /> {description}
-        </p>
+        </div>
       </CardContent>
     </Card>
   );

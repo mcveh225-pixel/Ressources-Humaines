@@ -20,7 +20,7 @@ export function DashboardLayout() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
+      <div className="flex items-center justify-center h-screen bg-slate-50 notranslate" translate="no">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="text-muted-foreground animate-pulse font-medium">Chargement du système...</p>
@@ -43,9 +43,11 @@ export function DashboardLayout() {
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center h-16 px-4 border-b bg-sidebar text-sidebar-foreground">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent" />}>
+            <SheetTrigger render={
+              <Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent">
                 <Menu className="h-6 w-6" />
-            </SheetTrigger>
+              </Button>
+            } />
             <SheetContent side="left" className="p-0 w-72 border-r-0">
               <Sidebar className="w-full" />
             </SheetContent>

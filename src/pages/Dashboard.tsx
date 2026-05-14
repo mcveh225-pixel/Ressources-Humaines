@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 bg-white p-12 rounded-[3rem] shadow-xl border border-slate-100">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 bg-white p-12 rounded-[3rem] shadow-xl border border-slate-100 notranslate" translate="no">
         <div className="relative">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
           <div className="absolute inset-0 flex items-center justify-center">
