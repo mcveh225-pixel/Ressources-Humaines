@@ -52,37 +52,21 @@ export default function EmployeeRegistration() {
         return;
       }
 
-      // Add a connectivity health check
-      try {
-        console.log("Health check...");
-        const { error: healthError } = await supabase.from('gares').select('id').limit(1);
-        if (healthError) {
-          console.error("Health check failed:", healthError);
-          toast.error("Impossible de joindre la base de données. " + healthError.message);
-        } else {
-          console.log("Health check OK");
-        }
-      } catch (e) {
-        console.error("Health check exception:", e);
-      }
-
       // 1. Check if employee exists in HR records with timeout
       console.log("Step 1: Check employee record for", { cleanMatricule, cleanPhone });
       
+      const timeoutPromise = (msg: string, time = 20000) => new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(msg)), time)
+      );
+
       const empPromise = supabase
         .from('employees')
         .select('*')
         .eq('matricule', cleanMatricule);
-        // Removing phone check temporarily to troubleshoot
-        // .eq('phone', cleanPhone);
-
-      const timeoutPromise = (msg: string) => new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(msg)), 20000)
-      );
 
       const { data: employees, error: empError } = await Promise.race([
         empPromise, 
-        timeoutPromise('La vérification de l\'employé a expiré. Vérifiez votre connexion à Supabase.')
+        timeoutPromise('La vérification de l\'employé a expiré. Vérifiez votre connexion à Supabase.', 25000)
       ]) as any;
 
       if (empError) {
@@ -161,7 +145,7 @@ export default function EmployeeRegistration() {
 
         // These columns might be missing in some schema versions
         try {
-          const { error: profileError } = await supabase
+          const profilePromise = supabase
             .from('profiles')
             .upsert({
               ...profileData,
@@ -169,14 +153,22 @@ export default function EmployeeRegistration() {
               phone: cleanPhone,
             }, { onConflict: 'id' });
 
+          const { error: profileError } = await Promise.race([
+            profilePromise,
+            timeoutPromise('La synchronisation du profil a expiré.', 15000)
+          ]) as any;
+
           if (profileError) {
             console.warn("Profile upsert with extra columns failed, retrying without them:", profileError.message);
             // Fallback to minimal profile if matricule/phone columns don't exist
-            const { error: retryError } = await supabase
+            const retryPromise = supabase
               .from('profiles')
               .upsert(profileData, { onConflict: 'id' });
             
-            if (retryError) console.error("Final profile sync fail:", retryError);
+            await Promise.race([
+              retryPromise,
+              timeoutPromise('Le second essai de synchronisation a expiré.', 10000)
+            ]);
           }
         } catch (e) {
           console.warn("Profile sync exception handled:", e);
