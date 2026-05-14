@@ -404,7 +404,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
       
       if (error) throw error;
       
-      toast.success("Employé ajouté avec succès");
+      toast.success(`Employé ${full_name} ajouté ! Matricule: ${autoMatricule}. L'employé peut maintenant se connecter avec son matricule.`);
       setEmployees([...employees, data[0]]);
       setIsAddDialogOpen(false);
       setFormData({ 

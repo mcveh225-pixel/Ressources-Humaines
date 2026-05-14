@@ -349,39 +349,63 @@ export function AccountsDashboard() {
 
         <div className="lg:w-80 space-y-6">
           <div className="space-y-4 px-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Publique (Shared URL)</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Publique (Vercel/Production)</Label>
+              <Badge variant="outline" className="text-[8px] bg-blue-50 text-blue-600 border-none font-black py-0 px-2 uppercase">Indispensable pour Mobile</Badge>
+            </div>
             <div className="flex gap-2">
               <Input 
                 value={customBaseUrl}
                 onChange={(e) => setCustomBaseUrl(e.target.value)}
-                placeholder="https://..."
-                className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs flex-1"
+                placeholder="Ex: https://dbs-app.vercel.app"
+                className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs flex-1 shadow-inner"
               />
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
+                  if (!customBaseUrl) {
+                    toast.error("Veuillez d'abord renseigner votre URL Vercel");
+                    return;
+                  }
                   navigator.clipboard.writeText(registrationUrl);
-                  toast.success("Lien copié !");
+                  toast.success("Lien de production copié !");
                 }}
-                className="h-10 rounded-xl px-3"
+                className="h-10 rounded-xl px-3 border-2"
               >
                 Copier
               </Button>
             </div>
+            
+            {!customBaseUrl && (
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-3 items-start">
+                <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-[10px] font-bold text-amber-800 leading-tight">
+                  <span className="uppercase">Attention:</span> Le lien par défaut (Google AI Studio) donnera une <span className="text-rose-600">erreur 403</span> sur mobile. 
+                  Copiez l'adresse de votre site Vercel ci-dessus.
+                </p>
+              </div>
+            )}
+
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">URL Générée :</p>
+               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">URL Générée pour QR Code :</p>
                <p className="text-[10px] font-mono break-all text-blue-600 font-bold">{registrationUrl}</p>
             </div>
             <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic">
-              Vérifiez que l'URL contient **/#/** pour fonctionner en prod.
+              Le QR code ci-dessous se met à jour automatiquement avec cette URL.
             </p>
           </div>
 
           <QRCodeGenerator 
             url={registrationUrl} 
             title="S'inscrire" 
-            description="Le code pour les nouveaux employés" 
+            description="Lien pour les nouveaux employés" 
+          />
+
+          <QRCodeGenerator 
+            url={`${customBaseUrl || window.location.origin}/#/login`} 
+            title="Se Connecter" 
+            description="Connexion rapide par Matricule" 
           />
           
           <Card className="border-none shadow-sm bg-slate-900 text-white rounded-[2rem]">
