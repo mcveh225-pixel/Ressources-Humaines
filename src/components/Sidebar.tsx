@@ -33,8 +33,6 @@ import { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AnimatePresence, motion } from 'motion/react';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NavItem {
@@ -537,15 +535,11 @@ export function Sidebar({ className }: { className?: string }) {
                         )}
                       </div>
 
-                      <AnimatePresence>
-                        {hasSubItems && isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden space-y-1 ml-10 border-l border-sidebar-accent/30 pl-4 py-1"
-                          >
-                            {item.subItems!.map((sub) => {
+                      {hasSubItems && isExpanded && (
+                        <div
+                          className="overflow-hidden space-y-1 ml-10 border-l border-sidebar-accent/30 pl-4 py-1"
+                        >
+                          {item.subItems!.map((sub) => {
                               const isSubActive = location.search.includes(sub.href.split('?')[1]);
                               return (
                                 <NavLink
@@ -562,9 +556,8 @@ export function Sidebar({ className }: { className?: string }) {
                                 </NavLink>
                               );
                             })}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

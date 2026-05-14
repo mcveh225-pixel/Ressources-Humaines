@@ -40,7 +40,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
 import { 
@@ -165,14 +164,7 @@ export function ServiceTechniqueDashboard() {
       </div>
 
       {/* Main Content Area based on subSection */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={subSection}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
+      <div>
           {subSection === 'vue-globale' && <GlobalOverviewView />}
           {subSection === 'vehicules-panne' && <VehiclesInBreakdownView />}
           {subSection === 'liste-vehicules' && <VehiclesListView searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
@@ -192,8 +184,7 @@ export function ServiceTechniqueDashboard() {
               </div>
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -350,9 +341,8 @@ function VehiclesListView({ searchQuery, setSearchQuery }: any) {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
         {MOCK_VEHICLES.map(v => (
-          <motion.div
+          <div
             key={v.id}
-            whileHover={{ scale: 1.01 }}
             className="group bg-white rounded-[3rem] p-8 shadow-sm border border-slate-50 flex items-start gap-8 relative overflow-hidden"
           >
              <div className="h-24 w-24 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shrink-0">
@@ -395,7 +385,7 @@ function VehiclesListView({ searchQuery, setSearchQuery }: any) {
                  </Button>
                </div>
              </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

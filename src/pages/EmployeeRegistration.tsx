@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { motion } from 'motion/react';
 import { 
   User, 
   Phone, 
@@ -27,26 +26,33 @@ export default function EmployeeRegistration() {
   const [matricule, setMatricule] = useState('');
   const [phone, setPhone] = useState('');
 
-  // Check if supabase is initialized correctly
-  const isConfigured = !!supabase;
+  // Check if supabase is initialized properly
+  const isConfigured = !!supabase && !!supabase.auth;
 
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
 
     try {
+      if (!isConfigured) {
+        toast.error("Supabase n'est pas configuré. Vérifiez vos variables d'environnement.");
+        setLoading(false);
+        return;
+      }
+
       if (!matricule || !phone) {
         toast.error("Veuillez remplir tous les champs.");
+        setLoading(false);
         return;
       }
 
       const cleanMatricule = matricule.trim().toUpperCase();
       const cleanPhone = phone.trim().replace(/\s/g, '');
 
-      console.log("Checking employee:", cleanMatricule, cleanPhone);
-
       // 1. Check if employee exists in HR records
-      const { data: employee, error: empError } = await supabase
+      const { data: employees, error: empError } = await supabase
         .from('employees')
         .select('*')
         .eq('matricule', cleanMatricule)
@@ -54,16 +60,18 @@ export default function EmployeeRegistration() {
 
       if (empError) {
         console.error("Employee fetch error:", empError);
-        toast.error("Impossible d'accéder à la base du personnel. Contactez l'administrateur.");
+        toast.error("Erreur de base de données : " + empError.message);
+        setLoading(false);
         return;
       }
 
-      if (!employee || employee.length === 0) {
-        toast.error("Matricule ou téléphone incorret. Vérifiez vos données ou contactez le DRH.");
+      if (!employees || employees.length === 0) {
+        toast.error("Matricule ou téléphone incorrect. Vérifiez vos données ou contactez le DRH.");
+        setLoading(false);
         return;
       }
 
-      const empData = employee[0];
+      const empData = employees[0];
       const loginEmail = `${cleanMatricule.toLowerCase()}@dbs-ban.ci`;
       const loginPassword = cleanMatricule;
 
@@ -83,39 +91,63 @@ export default function EmployeeRegistration() {
       });
 
       if (signUpError) {
-        if (signUpError.message.includes('User already registered') || signUpError.status === 400) {
+        // Handle "already registered"
+        if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400) {
           toast.info("Ce compte est déjà activé. Redirection...");
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => navigate('/login'), 1500);
           return;
         }
         throw signUpError;
       }
 
-      if (authData.user) {
-        // 3. Update profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            email: loginEmail,
-            full_name: empData.full_name,
-            role: empData.role,
-            matricule: cleanMatricule,
-            phone: cleanPhone,
-            gare_id: empData.gare_id
-          }, { onConflict: 'id' });
+      // 3. Update profiles table
+      if (authData?.user) {
+        console.log("Account created/synced:", authData.user.id);
+        
+        // Attempt to update profile with all known info
+        // We do this individually to avoid a total failure if columns are missing
+        const profileData: any = {
+          id: authData.user.id,
+          email: loginEmail,
+          full_name: empData.full_name,
+          role: empData.role,
+          gare_id: empData.gare_id,
+          status: 'Actif'
+        };
 
-        if (profileError) console.warn("Profile sync issue:", profileError);
+        // These columns might be missing in some schema versions
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              ...profileData,
+              matricule: cleanMatricule,
+              phone: cleanPhone,
+            }, { onConflict: 'id' });
 
+          if (profileError) {
+            console.warn("Profile upsert with extra columns failed, retrying without them:", profileError.message);
+            // Fallback to minimal profile if matricule/phone columns don't exist
+            const { error: retryError } = await supabase
+              .from('profiles')
+              .upsert(profileData, { onConflict: 'id' });
+            
+            if (retryError) console.error("Final profile sync fail:", retryError);
+          }
+        } catch (e) {
+          console.warn("Profile sync exception handled:", e);
+        }
+        
         setSuccess(true);
         toast.success("Compte activé avec succès !");
       } else {
-        toast.info("Vérification envoyée si requise (Généralement désactivé).");
+        // Fallback for cases where session is not immediate
         setSuccess(true);
+        toast.info("Activation en cours (Vérifiez vos emails si nécessaire)");
       }
     } catch (err: any) {
       console.error("Activation flow failed:", err);
-      toast.error("Erreur d'activation: " + (err.message || "Inconnue"));
+      toast.error("Échec d'activation : " + (err.message || "Erreur inconnue"));
     } finally {
       setLoading(false);
     }
@@ -123,39 +155,29 @@ export default function EmployeeRegistration() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full text-center space-y-8"
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center space-y-8">
+        <div className="h-24 w-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center">
+          <CheckCircle2 className="h-12 w-12" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black text-slate-900 uppercase">Compte Activé !</h1>
+          <p className="text-slate-500 font-bold">
+            Bienvenue chez DBS. Votre compte est maintenant prêt.
+          </p>
+        </div>
+        <Button 
+          onClick={() => navigate('/login')}
+          className="w-full max-w-xs h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-100"
         >
-          <div className="h-24 w-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-12 w-12" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black text-slate-900 uppercase">Compte Activé !</h1>
-            <p className="text-slate-500 font-bold">
-              Bienvenue chez DBS. Votre compte est maintenant prêt.
-            </p>
-          </div>
-          <Button 
-            onClick={() => navigate('/login')}
-            className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-100"
-          >
-            Se Connecter
-          </Button>
-        </motion.div>
+          Se Connecter
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full"
-      >
+      <div className="max-w-md w-full">
         <div className="flex flex-col items-center mb-8 text-center space-y-3">
           <div className="h-14 w-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
              <Bus className="h-8 w-8" />
@@ -225,7 +247,7 @@ export default function EmployeeRegistration() {
             </form>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

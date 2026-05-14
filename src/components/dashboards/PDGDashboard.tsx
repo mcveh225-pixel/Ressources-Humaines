@@ -23,7 +23,6 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'motion/react';
 
 import { GARES } from '@/constants';
 
@@ -131,13 +130,11 @@ export function PDGDashboard() {
                   <span className="text-slate-400 font-bold">{gare.value}%</span>
                 </div>
                 <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5 ring-1 ring-slate-100">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${gare.value}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
+                  <div 
                     className="h-full rounded-full shadow-sm" 
                     style={{ 
-                      backgroundColor: gare.color 
+                      backgroundColor: gare.color,
+                      width: `${gare.value}%`
                     }}
                   />
                 </div>

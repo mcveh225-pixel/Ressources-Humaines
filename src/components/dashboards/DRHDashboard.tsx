@@ -53,7 +53,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/components/AuthProvider';
 import { UserRole } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -675,9 +674,8 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map((emp) => (
-                <motion.div
+                <div
                   key={emp.id}
-                  whileHover={{ y: -4, scale: 1.02 }}
                   onClick={() => { setSelectedEmployee(emp); setIsCardOpen(true); }}
                   className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-slate-50 cursor-pointer group"
                 >
@@ -706,7 +704,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
               {filteredEmployees.length === 0 && (
                 <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
@@ -802,11 +800,8 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredEmployees.map((emp) => (
-                  <motion.div
+                  <div
                     key={emp.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ y: -4, scale: 1.02 }}
                     onClick={() => { setSelectedEmployee(emp); setIsCardOpen(true); }}
                     className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-slate-50 cursor-pointer group flex items-center gap-4"
                   >
@@ -825,7 +820,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{emp.service}</p>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
                 {filteredEmployees.length === 0 && (
                   <div className="col-span-full py-16 text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100">
@@ -845,9 +840,8 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                                    gare.icon === 'Building2' ? Building2 : MapPin;
                                    
               return (
-                <motion.button
+                <button
                   key={gare.id}
-                  whileHover={{ y: -4, scale: 1.02 }}
                   onClick={() => setSelectedGare(gare.id)}
                   className="aspect-square flex flex-col items-center justify-center p-6 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-transparent hover:border-primary/10"
                 >
@@ -870,7 +864,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                   >
                     {employees.filter(e => e.gare_id === gare.id).length} Pers.
                   </Badge>
-                </motion.button>
+                </button>
               );
             })}
           </div>
@@ -904,7 +898,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map((emp) => (
-                <motion.div
+                <div
                   key={emp.id}
                   onClick={() => { setSelectedEmployee(emp); setIsCardOpen(true); }}
                   className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-slate-50 cursor-pointer flex items-center gap-4"
@@ -917,7 +911,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                     <h3 className="font-bold text-slate-900">{emp.full_name}</h3>
                     <p className="text-[10px] font-black text-primary uppercase">{emp.role}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -951,7 +945,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map((emp) => (
-                <motion.div
+                <div
                   key={emp.id}
                   onClick={() => { setSelectedEmployee(emp); setIsCardOpen(true); }}
                   className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-slate-50 cursor-pointer flex items-center gap-4"
@@ -964,7 +958,7 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
                     <h3 className="font-bold text-slate-900">{emp.full_name}</h3>
                     <p className="text-[10px] font-black text-primary uppercase">{emp.role}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -989,17 +983,9 @@ export function DRHDashboard({ initialTab = 'personnel' }: DRHDashboardProps) {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab + (selectedGare || '')}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
+      <div>
           {renderContent()}
-        </motion.div>
-      </AnimatePresence>
+      </div>
 
       <ProfessionalCard 
         employee={selectedEmployee} 

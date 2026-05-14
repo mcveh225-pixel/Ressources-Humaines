@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 export function ChauffeurDashboard() {
@@ -46,12 +45,9 @@ export function ChauffeurDashboard() {
                 <span className="text-4xl font-black uppercase">{user?.gareId || 'Abidjan'}</span>
                 <span className="text-xs text-white/60 font-bold uppercase tracking-widest">En attente de départ</span>
               </div>
-              <motion.div 
-                animate={{ x: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-              >
+              <div>
                 <ArrowRight className="h-8 w-8 text-white/40" />
-              </motion.div>
+              </div>
               <div className="flex flex-col text-right">
                 <span className="text-4xl font-black uppercase">Destination</span>
                 <span className="text-xs text-white/60 font-bold uppercase tracking-widest">Non définie</span>

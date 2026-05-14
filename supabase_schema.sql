@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL UNIQUE,
   full_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'DRH',
+  matricule TEXT,
+  phone TEXT,
   gare_id TEXT REFERENCES public.gares(id) ON DELETE SET NULL,
   avatar_url TEXT,
   status TEXT DEFAULT 'Actif',
@@ -38,16 +40,21 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role)
+  INSERT INTO public.profiles (id, email, full_name, role, matricule, phone, gare_id)
   VALUES (
     new.id, 
     new.email, 
     COALESCE(new.raw_user_meta_data->>'full_name', 'Utilisateur DBS'),
-    COALESCE(new.raw_user_meta_data->>'role', 'CHAUFFEUR')
+    COALESCE(new.raw_user_meta_data->>'role', 'CHAUFFEUR'),
+    new.raw_user_meta_data->>'matricule',
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'gare_id'
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
-    full_name = EXCLUDED.full_name;
+    full_name = EXCLUDED.full_name,
+    matricule = EXCLUDED.matricule,
+    phone = EXCLUDED.phone;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -233,6 +240,13 @@ INSERT INTO public.gares (id, name, location) VALUES
 ('facobly', 'Facobly', 'Facobly'),
 ('san-pedro', 'San Pedro', 'San Pedro')
 ON CONFLICT (id) DO NOTHING;
+
+-- Insertion d'employés de test pour permettre l'activation
+INSERT INTO public.employees (matricule, full_name, role, phone, service, gare_id) VALUES
+('DBS-2026-001', 'DIOMANDE AHMED', 'PDG', '0101010101', 'DIRECTION', 'adjame'),
+('DBS-2026-002', 'KOFFI KONAN', 'CHAUFFEUR', '0202020202', 'EXPLOITATION', 'adjame'),
+('DBS-2026-003', 'TRAORE MOUSSA', 'CHEF_DE_GARE', '0303030303', 'EXPLOITATION', 'duekoue')
+ON CONFLICT (matricule) DO NOTHING;
 
 -- 13. Insertion des Administrateurs par défaut (si nécessaire)
 INSERT INTO public.profiles (id, email, full_name, role, status)

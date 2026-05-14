@@ -7,8 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bus, Lock, Mail, Users, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion } from 'motion/react';
-
 import { Logo } from '@/components/Logo';
 import { cn } from "@/lib/utils";
 
@@ -104,12 +102,7 @@ export default function LoginPage() {
         />
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-[340px] z-10 lg:mr-[10%] lg:ml-auto"
-      >
+      <div className="w-full max-w-[340px] z-10 lg:mr-[10%] lg:ml-auto">
         <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-md rounded-[2.5rem] overflow-hidden">
           <CardHeader className="space-y-4 text-center p-8 pb-4">
             <Logo size="xl" showText={false} className="mx-auto drop-shadow-xl" />
@@ -223,7 +216,7 @@ export default function LoginPage() {
             </CardFooter>
           </form>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

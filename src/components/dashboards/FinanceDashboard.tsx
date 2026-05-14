@@ -85,7 +85,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { GARES } from '@/constants';
 import { supabase } from '@/lib/supabase';
@@ -675,14 +674,7 @@ export function FinanceDashboard() {
           </div>
 
           {/* Rendu Conditionnel du Contenu */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeSection}-${activeSubSection}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
+          <div>
               {activeSection === 'dashboard' && activeSubSection === 'vue-generale' && (
                 <div className="space-y-10">
                   {/* Stats Overview */}
@@ -1133,8 +1125,7 @@ export function FinanceDashboard() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+          </div>
         </div>
       </main>
 

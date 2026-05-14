@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   Bus, 
   User, 
@@ -379,15 +378,9 @@ export function CheckingDashboard() {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div>
         {!isHistoryView ? (
-          <motion.div 
-            key="form"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
+          <div className="space-y-8">
             {/* Header Fiche */}
             <div className="flex flex-col items-center text-center space-y-4 mb-10">
               <div className="flex items-center gap-4">
@@ -581,15 +574,9 @@ export function CheckingDashboard() {
 
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div 
-            key="history"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
+          <div className="space-y-6">
             {/* History Filters */}
             <Card className="border-none shadow-xl shadow-slate-100 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
@@ -707,9 +694,9 @@ export function CheckingDashboard() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
