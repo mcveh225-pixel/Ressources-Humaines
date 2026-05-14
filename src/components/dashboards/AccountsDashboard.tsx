@@ -33,6 +33,7 @@ import { UserRole } from '@/types';
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
 import { cn } from "@/lib/utils";
+import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 
 interface AdminAccount {
   id: string;
@@ -202,11 +203,16 @@ export function AccountsDashboard() {
     }
   };
 
+  const [customBaseUrl, setCustomBaseUrl] = useState('');
+  const registrationUrl = `${customBaseUrl || window.location.origin}/register-employee`;
+
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Gestion des Comptes Accès</h1>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex-1 space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Gestion des Comptes Accès</h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-muted-foreground">Administration des privilèges et accès au système.</p>
             <Badge variant="outline" className={cn(
@@ -332,11 +338,46 @@ export function AccountsDashboard() {
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Utilisateurs Actifs</p>
-                <p className="text-2xl font-black">142</p>
+                <p className="text-2xl font-black">{accounts.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+        </div>
+
+        <div className="lg:w-80 space-y-6">
+          <div className="space-y-4 px-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Publique (Shared URL)</Label>
+            <Input 
+              value={customBaseUrl}
+              onChange={(e) => setCustomBaseUrl(e.target.value)}
+              placeholder="https://ais-pre-....run.app"
+              className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs"
+            />
+            <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic">
+              Collez l'**URL partagée** pour que le code fonctionne sur mobile.
+            </p>
+          </div>
+
+          <QRCodeGenerator 
+            url={registrationUrl} 
+            title="S'inscrire" 
+            description="Le code pour les nouveaux employés" 
+          />
+          
+          <Card className="border-none shadow-sm bg-slate-900 text-white rounded-[2rem]">
+            <CardContent className="p-6 space-y-4">
+              <div className="h-10 w-10 bg-white/10 rounded-xl flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-blue-400" />
+              </div>
+              <p className="text-xs font-medium leading-relaxed opacity-80">
+                Partagez ce QR code avec vos employés pour qu'ils puissent créer leur propre compte avec leur numéro de téléphone et matricule.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden">

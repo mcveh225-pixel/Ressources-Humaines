@@ -9,6 +9,7 @@ import { AuthProvider } from './components/AuthProvider';
 import { DashboardLayout } from './components/DashboardLayout';
 import LoginPage from './pages/Login';
 import DashboardPage from './pages/Dashboard';
+import EmployeeRegistration from './pages/EmployeeRegistration';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
@@ -47,6 +48,7 @@ export default function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register-employee" element={<EmployeeRegistration />} />
             
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<DashboardPage />} />
@@ -62,6 +64,12 @@ export default function App() {
               <Route path="/voyages" element={<DashboardPage />} />
               <Route path="/checking" element={<DashboardPage />} />
               <Route path="/mon-vehicule" element={<DashboardPage />} />
+              <Route path="/pannes" element={<DashboardPage />} />
+              <Route path="/carburant" element={<DashboardPage />} />
+              <Route path="/trajet" element={<DashboardPage />} />
+              <Route path="/messages" element={<DashboardPage />} />
+              <Route path="/notifications" element={<DashboardPage />} />
+              <Route path="/profile" element={<DashboardPage />} />
               <Route path="/admin/accounts" element={<DashboardPage />} />
               <Route path="/maintenance" element={<DashboardPage />} />
             </Route>

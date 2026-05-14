@@ -34,6 +34,8 @@ export interface UserProfile {
   role: UserRole;
   gareId?: string;
   avatarUrl?: string;
+  matricule?: string;
+  phone?: string;
 }
 
 export interface Employee {

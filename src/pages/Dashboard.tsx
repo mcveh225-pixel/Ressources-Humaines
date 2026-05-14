@@ -80,7 +80,10 @@ export default function Dashboard() {
     if (path.startsWith('/maintenance')) {
       return <ServiceTechniqueDashboard />;
     }
-    if (path.startsWith('/voyages') || path.startsWith('/mon-vehicule')) {
+    if (path.startsWith('/voyages') || path.startsWith('/mon-vehicule') || 
+        path.startsWith('/pannes') || path.startsWith('/carburant') || 
+        path.startsWith('/trajet') || path.startsWith('/messages') || 
+        path.startsWith('/notifications') || path.startsWith('/profile')) {
       return <ChauffeurDashboard />;
     }
     if (path.startsWith('/checking')) {
