@@ -13,6 +13,7 @@ const getSupabaseConfig = () => {
     console.error('Supabase configuration is invalid. App may crash.');
   }
 
+  console.log('Supabase Initialized with URL:', url);
   return { url, key, isValid: isValidUrl && isValidKey };
 };
 

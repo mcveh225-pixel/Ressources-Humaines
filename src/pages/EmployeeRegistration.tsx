@@ -52,14 +52,29 @@ export default function EmployeeRegistration() {
         return;
       }
 
+      // Add a connectivity health check
+      try {
+        console.log("Health check...");
+        const { error: healthError } = await supabase.from('gares').select('id').limit(1);
+        if (healthError) {
+          console.error("Health check failed:", healthError);
+          toast.error("Impossible de joindre la base de données. " + healthError.message);
+        } else {
+          console.log("Health check OK");
+        }
+      } catch (e) {
+        console.error("Health check exception:", e);
+      }
+
       // 1. Check if employee exists in HR records with timeout
       console.log("Step 1: Check employee record for", { cleanMatricule, cleanPhone });
       
       const empPromise = supabase
         .from('employees')
         .select('*')
-        .eq('matricule', cleanMatricule)
-        .eq('phone', cleanPhone);
+        .eq('matricule', cleanMatricule);
+        // Removing phone check temporarily to troubleshoot
+        // .eq('phone', cleanPhone);
 
       const timeoutPromise = (msg: string) => new Promise((_, reject) => 
         setTimeout(() => reject(new Error(msg)), 20000)
@@ -78,13 +93,22 @@ export default function EmployeeRegistration() {
       }
 
       if (!employees || employees.length === 0) {
-        console.warn("Employee not found:", { cleanMatricule, cleanPhone });
-        toast.error("Matricule ou téléphone incorrect. Vérifiez vos données ou contactez le DRH.");
+        console.warn("Employee not found by matricule:", cleanMatricule);
+        toast.error(`Matricule ${cleanMatricule} introuvable. Si vous avez déployé sur Vercel, vérifiez que vos variables d'environnement Supabase sont configurées.`);
         setLoading(false);
         return;
       }
 
       const empData = employees[0];
+      
+      // Manual phone check for more descriptive errors
+      const dbPhone = (empData.phone || '').trim().replace(/\s/g, '');
+      if (dbPhone !== cleanPhone) {
+         console.warn("Phone mismatch:", { input: cleanPhone, db: dbPhone });
+         toast.error("Le numéro de téléphone ne correspond pas à ce matricule.");
+         setLoading(false);
+         return;
+      }
       const loginEmail = `${cleanMatricule.toLowerCase()}@dbs-ban.ci`;
       const loginPassword = cleanMatricule;
 
