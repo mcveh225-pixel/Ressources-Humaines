@@ -37,26 +37,35 @@ export default function EmployeeRegistration() {
 
     try {
       if (!isConfigured) {
-        toast.error("Supabase n'est pas configuré. Vérifiez vos variables d'environnement.");
-        setLoading(false);
-        return;
-      }
-
-      if (!matricule || !phone) {
-        toast.error("Veuillez remplir tous les champs.");
+        toast.error("Supabase n'est pas configuré.");
         setLoading(false);
         return;
       }
 
       const cleanMatricule = matricule.trim().toUpperCase();
       const cleanPhone = phone.trim().replace(/\s/g, '');
+      console.log("Activation start:", { cleanMatricule, cleanPhone });
 
-      // 1. Check if employee exists in HR records
-      const { data: employees, error: empError } = await supabase
+      if (!cleanMatricule || !cleanPhone) {
+        toast.error("Veuillez remplir tous les champs.");
+        setLoading(false);
+        return;
+      }
+
+      // 1. Check if employee exists in HR records with timeout
+      console.log("Step 1: Check employee record");
+      
+      const empPromise = supabase
         .from('employees')
         .select('*')
         .eq('matricule', cleanMatricule)
         .eq('phone', cleanPhone);
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Le serveur ne répond pas. Vérifiez votre connexion.')), 12000)
+      );
+
+      const { data: employees, error: empError } = await Promise.race([empPromise, timeoutPromise]) as any;
 
       if (empError) {
         console.error("Employee fetch error:", empError);
@@ -66,6 +75,7 @@ export default function EmployeeRegistration() {
       }
 
       if (!employees || employees.length === 0) {
+        console.warn("Employee not found:", { cleanMatricule, cleanPhone });
         toast.error("Matricule ou téléphone incorrect. Vérifiez vos données ou contactez le DRH.");
         setLoading(false);
         return;
@@ -76,7 +86,8 @@ export default function EmployeeRegistration() {
       const loginPassword = cleanMatricule;
 
       // 2. Create/Sync Auth Account
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      console.log("Step 2: Sign up user", loginEmail);
+      const signUpPromise = supabase.auth.signUp({
         email: loginEmail,
         password: loginPassword,
         options: {
@@ -90,9 +101,12 @@ export default function EmployeeRegistration() {
         }
       });
 
+      const { data: authData, error: signUpError } = await Promise.race([signUpPromise, timeoutPromise]) as any;
+
       if (signUpError) {
+        console.error("SignUp Error:", signUpError);
         // Handle "already registered"
-        if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400) {
+        if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400 || signUpError.message.includes('User already registered')) {
           toast.info("Ce compte est déjà activé. Redirection...");
           setTimeout(() => navigate('/login'), 1500);
           return;
@@ -102,7 +116,7 @@ export default function EmployeeRegistration() {
 
       // 3. Update profiles table
       if (authData?.user) {
-        console.log("Account created/synced:", authData.user.id);
+        console.log("Step 3: Update profile", authData.user.id);
         
         // Attempt to update profile with all known info
         // We do this individually to avoid a total failure if columns are missing

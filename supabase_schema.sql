@@ -245,7 +245,8 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.employees (matricule, full_name, role, phone, service, gare_id) VALUES
 ('DBS-2026-001', 'DIOMANDE AHMED', 'PDG', '0101010101', 'DIRECTION', 'adjame'),
 ('DBS-2026-002', 'KOFFI KONAN', 'CHAUFFEUR', '0202020202', 'EXPLOITATION', 'adjame'),
-('DBS-2026-003', 'TRAORE MOUSSA', 'CHEF_DE_GARE', '0303030303', 'EXPLOITATION', 'duekoue')
+('DBS-2026-003', 'TRAORE MOUSSA', 'CHEF_DE_GARE', '0303030303', 'EXPLOITATION', 'duekoue'),
+('DBS-2662G', 'DIOMANDE BAN', 'CHAUFFEUR', '0555796366', 'EXPLOITATION', 'adjame')
 ON CONFLICT (matricule) DO NOTHING;
 
 -- 13. Insertion des Administrateurs par défaut (si nécessaire)
@@ -258,5 +259,5 @@ DO UPDATE SET
   full_name = EXCLUDED.full_name,
   role = EXCLUDED.role;
 
--- 14. Force le rôle DRH pour l'utilisateur actuel pour le prototype
-UPDATE public.profiles SET role = 'DRH' WHERE email = 'mcveh225@gmail.com';
+-- 14. Force le rôle PDG pour l'utilisateur actuel pour le prototype
+UPDATE public.profiles SET role = 'PDG' WHERE email = 'mcveh225@gmail.com';
