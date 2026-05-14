@@ -17,17 +17,8 @@ import {
   CheckCircle2,
   Loader2
 } from 'lucide-react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserRole } from '@/types';
-import { GARES } from '@/constants';
 
 export default function EmployeeRegistration() {
   const navigate = useNavigate();
@@ -36,49 +27,65 @@ export default function EmployeeRegistration() {
   const [matricule, setMatricule] = useState('');
   const [phone, setPhone] = useState('');
 
+  // Check if supabase is initialized correctly
+  const isConfigured = !!supabase;
+
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!matricule || !phone) {
+        toast.error("Veuillez remplir tous les champs.");
+        return;
+      }
+
       const cleanMatricule = matricule.trim().toUpperCase();
       const cleanPhone = phone.trim().replace(/\s/g, '');
+
+      console.log("Checking employee:", cleanMatricule, cleanPhone);
 
       // 1. Check if employee exists in HR records
       const { data: employee, error: empError } = await supabase
         .from('employees')
         .select('*')
         .eq('matricule', cleanMatricule)
-        .eq('phone', cleanPhone)
-        .single();
+        .eq('phone', cleanPhone);
 
-      if (empError || !employee) {
-        toast.error("Données incorrectes. Veuillez vérifier votre matricule et votre numéro ou contacter le DRH.");
+      if (empError) {
+        console.error("Employee fetch error:", empError);
+        toast.error("Impossible d'accéder à la base du personnel. Contactez l'administrateur.");
         return;
       }
 
-      // 2. Create Auth Account
+      if (!employee || employee.length === 0) {
+        toast.error("Matricule ou téléphone incorret. Vérifiez vos données ou contactez le DRH.");
+        return;
+      }
+
+      const empData = employee[0];
       const loginEmail = `${cleanMatricule.toLowerCase()}@dbs-ban.ci`;
       const loginPassword = cleanMatricule;
 
+      // 2. Create/Sync Auth Account
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: loginEmail,
         password: loginPassword,
         options: {
           data: {
-            full_name: employee.full_name,
-            role: employee.role,
+            full_name: empData.full_name,
+            role: empData.role,
             matricule: cleanMatricule,
             phone: cleanPhone,
-            gare_id: employee.gare_id
+            gare_id: empData.gare_id
           }
         }
       });
 
       if (signUpError) {
-        if (signUpError.message.includes('User already registered')) {
-          toast.info("Compte déjà activé. Redirection vers la connexion...");
-          navigate('/login');
+        if (signUpError.message.includes('User already registered') || signUpError.status === 400) {
+          toast.info("Ce compte est déjà activé. Redirection...");
+          setTimeout(() => navigate('/login'), 2000);
           return;
         }
         throw signUpError;
@@ -88,22 +95,27 @@ export default function EmployeeRegistration() {
         // 3. Update profile
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
-            full_name: employee.full_name,
-            role: employee.role,
+          .upsert({
+            id: authData.user.id,
+            email: loginEmail,
+            full_name: empData.full_name,
+            role: empData.role,
             matricule: cleanMatricule,
             phone: cleanPhone,
-            gare_id: employee.gare_id
-          })
-          .eq('id', authData.user.id);
+            gare_id: empData.gare_id
+          }, { onConflict: 'id' });
 
         if (profileError) console.warn("Profile sync issue:", profileError);
 
         setSuccess(true);
         toast.success("Compte activé avec succès !");
+      } else {
+        toast.info("Vérification envoyée si requise (Généralement désactivé).");
+        setSuccess(true);
       }
     } catch (err: any) {
-      toast.error("Erreur d'activation: " + err.message);
+      console.error("Activation flow failed:", err);
+      toast.error("Erreur d'activation: " + (err.message || "Inconnue"));
     } finally {
       setLoading(false);
     }

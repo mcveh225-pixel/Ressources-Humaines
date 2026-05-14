@@ -1,20 +1,20 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-const rawUrl = import.meta.env.VITE_SUPABASE_URL || 'https://fwuxmeifaycjvrvludjr.supabase.co';
-const supabaseUrl = rawUrl.trim().replace(/\/$/, '');
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dXhtZWlmYXljanZydmx1ZGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzk5NDYsImV4cCI6MjA5MzgxNTk0Nn0.NhWY67oOMpNAvUS9tqhPH4EYvZHY86WnIQIKgqfeF00').trim();
+const getSupabaseConfig = () => {
+  const url = (import.meta.env.VITE_SUPABASE_URL || 'https://fwuxmeifaycjvrvludjr.supabase.co').trim().replace(/\/$/, '');
+  const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dXhtZWlmYXljanZydmx1ZGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzk5NDYsImV4cCI6MjA5MzgxNTk0Nn0.NhWY67oOMpNAvUS9tqhPH4EYvZHY86WnIQIKgqfeF00').trim();
 
-console.log('--- SUPABASE CONFIG CHECK ---');
-console.log('URL:', supabaseUrl);
-console.log('Key defined:', !!supabaseAnonKey);
-if (supabaseUrl.includes('run.app')) {
-  console.error('CRITICAL: VITE_SUPABASE_URL is pointing to a Cloud Run URL instead of Supabase.');
-}
-console.log('----------------------------');
+  // Basic validation to prevent immediate crashes
+  const isValidUrl = url.startsWith('http') && url.includes('.');
+  const isValidKey = key.length > 20;
 
-if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'https://your-project.supabase.co') {
-  console.warn('Supabase credentials are missing or default. Check your .env file or Settings.');
-}
+  if (!isValidUrl || !isValidKey) {
+    console.error('Supabase configuration is invalid. App may crash.');
+  }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  return { url, key, isValid: isValidUrl && isValidKey };
+};
+
+const config = getSupabaseConfig();
+export const supabase = createClient(config.url, config.key);
