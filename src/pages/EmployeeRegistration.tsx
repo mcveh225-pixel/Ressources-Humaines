@@ -53,7 +53,7 @@ export default function EmployeeRegistration() {
       }
 
       // 1. Check if employee exists in HR records with timeout
-      console.log("Step 1: Check employee record");
+      console.log("Step 1: Check employee record for", { cleanMatricule, cleanPhone });
       
       const empPromise = supabase
         .from('employees')
@@ -61,11 +61,14 @@ export default function EmployeeRegistration() {
         .eq('matricule', cleanMatricule)
         .eq('phone', cleanPhone);
 
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Le serveur ne répond pas. Vérifiez votre connexion.')), 12000)
+      const timeoutPromise = (msg: string) => new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(msg)), 20000)
       );
 
-      const { data: employees, error: empError } = await Promise.race([empPromise, timeoutPromise]) as any;
+      const { data: employees, error: empError } = await Promise.race([
+        empPromise, 
+        timeoutPromise('La vérification de l\'employé a expiré. Vérifiez votre connexion à Supabase.')
+      ]) as any;
 
       if (empError) {
         console.error("Employee fetch error:", empError);
@@ -101,7 +104,10 @@ export default function EmployeeRegistration() {
         }
       });
 
-      const { data: authData, error: signUpError } = await Promise.race([signUpPromise, timeoutPromise]) as any;
+      const { data: authData, error: signUpError } = await Promise.race([
+        signUpPromise, 
+        timeoutPromise('L\'activation du compte a expiré. Réessayez.')
+      ]) as any;
 
       if (signUpError) {
         console.error("SignUp Error:", signUpError);
