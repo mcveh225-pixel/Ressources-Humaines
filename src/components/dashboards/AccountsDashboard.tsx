@@ -204,7 +204,7 @@ export function AccountsDashboard() {
   };
 
   const [customBaseUrl, setCustomBaseUrl] = useState('');
-  const registrationUrl = `${customBaseUrl || window.location.origin}/register-employee`;
+  const registrationUrl = `${customBaseUrl || window.location.origin}/#/register-employee`;
 
   return (
     <div className="space-y-8">
@@ -350,14 +350,31 @@ export function AccountsDashboard() {
         <div className="lg:w-80 space-y-6">
           <div className="space-y-4 px-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Publique (Shared URL)</Label>
-            <Input 
-              value={customBaseUrl}
-              onChange={(e) => setCustomBaseUrl(e.target.value)}
-              placeholder="https://ais-pre-....run.app"
-              className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs"
-            />
+            <div className="flex gap-2">
+              <Input 
+                value={customBaseUrl}
+                onChange={(e) => setCustomBaseUrl(e.target.value)}
+                placeholder="https://..."
+                className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs flex-1"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  navigator.clipboard.writeText(registrationUrl);
+                  toast.success("Lien copié !");
+                }}
+                className="h-10 rounded-xl px-3"
+              >
+                Copier
+              </Button>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">URL Générée :</p>
+               <p className="text-[10px] font-mono break-all text-blue-600 font-bold">{registrationUrl}</p>
+            </div>
             <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic">
-              Collez l'**URL partagée** pour que le code fonctionne sur mobile.
+              Vérifiez que l'URL contient **/#/** pour fonctionner en prod.
             </p>
           </div>
 

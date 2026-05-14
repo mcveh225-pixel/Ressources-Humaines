@@ -22,6 +22,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     let isMounted = true;
 
+    // Safety timeout: if loading is still true after 8 seconds, force it to false
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('AuthProvider: Loading taking too long, forcing ready state');
+        setLoading(false);
+      }
+    }, 8000);
+
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -73,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
     };
   }, []);
 

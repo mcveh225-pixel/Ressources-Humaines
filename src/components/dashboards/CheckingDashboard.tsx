@@ -19,12 +19,24 @@ import {
   Loader2,
   ChevronRight,
   Search,
-  Check
+  Check,
+  X
 } from 'lucide-react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface CheckItem {
   id: string;
@@ -55,6 +67,8 @@ export function CheckingDashboard() {
   const [history, setHistory] = useState<CheckingRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchHistoryQuery, setSearchHistoryQuery] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState<CheckingRecord | null>(null);
   
   const [formData, setFormData] = useState({
     chauffeur: user?.fullName || '',
@@ -212,8 +226,133 @@ export function CheckingDashboard() {
     }
   };
 
+  const filteredHistory = history.filter(record => 
+    record.car_number.toLowerCase().includes(searchHistoryQuery.toLowerCase()) ||
+    record.chauffeur_name.toLowerCase().includes(searchHistoryQuery.toLowerCase())
+  );
+
+  const generatePDF = (record: CheckingRecord) => {
+    try {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(22);
+      doc.setTextColor(37, 99, 235);
+      doc.text('DIOMANDE BAN SERVICE', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text('FICHE TECHNIQUE DE CAR AVANT LE DÉPART', 105, 30, { align: 'center' });
+      
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, 35, 190, 35);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Date du contrôle: ${new Date(record.check_date).toLocaleDateString()}`, 20, 45);
+      
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(12);
+      doc.text(`Chauffeur: ${record.chauffeur_name}`, 20, 55);
+      doc.text(`Véhicule: ${record.car_number}`, 120, 55);
+      
+      let currentY = 70;
+      record.sections.forEach((section) => {
+        const tableData = section.items.map(item => [
+          item.label,
+          item.status === 'ok' ? 'CONFORME' : item.status === 'non' ? 'NON CONFORME' : 'N/A'
+        ]);
+        
+        autoTable(doc, {
+          startY: currentY,
+          head: [[section.title.toUpperCase(), 'ÉTAT']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [37, 99, 235] },
+          didDrawPage: (data) => {
+            currentY = (doc as any).lastAutoTable.finalY + 10;
+          }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+      });
+      
+      doc.save(`Checking_${record.car_number}.pdf`);
+      toast.success("PDF généré !");
+    } catch (err: any) {
+      toast.error("Erreur PDF: " + err.message);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto pb-20 space-y-8 animate-in fade-in duration-700">
+      
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-none rounded-[3rem] shadow-2xl flex flex-col">
+          <DialogHeader className="p-8 pb-4 shrink-0 bg-white border-b border-slate-50 flex flex-row items-center justify-between">
+            <div>
+              <DialogTitle className="text-2xl font-black uppercase tracking-tight text-blue-700">
+                Fiche: {selectedRecord?.car_number}
+              </DialogTitle>
+              <DialogDescription className="font-bold flex items-center gap-2 mt-1">
+                Contrôle du {selectedRecord && new Date(selectedRecord.check_date).toLocaleDateString()}
+              </DialogDescription>
+            </div>
+            <Button 
+               variant="ghost" 
+               size="icon" 
+               className="rounded-full h-10 w-10 hover:bg-slate-50"
+               onClick={() => setSelectedRecord(null)}
+            >
+               <X className="h-5 w-5" />
+            </Button>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1 p-8">
+            <div className="space-y-12 pb-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-slate-50 p-6 rounded-3xl text-center">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Trajet</p>
+                  <p className="font-bold text-slate-800 line-clamp-1">{selectedRecord?.departure_city} → {selectedRecord?.arrival_city}</p>
+                </div>
+                <div className="bg-slate-50 p-6 rounded-3xl text-center">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Chauffeur</p>
+                  <p className="font-bold text-slate-800">{selectedRecord?.chauffeur_name}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {selectedRecord?.sections.map((section, idx) => (
+                  <div key={idx} className="space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 border-b pb-2">
+                       {section.title}
+                    </h4>
+                    <div className="space-y-2 text-sm italic">
+                      {section.items.map((item) => (
+                        <div key={item.id} className="flex justify-between border-b pb-1">
+                          <span>{item.label}</span>
+                          <span className={cn(item.status === 'ok' ? "text-emerald-500 font-bold" : "text-rose-500 font-bold")}>
+                            {item.status?.toUpperCase() || '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+          
+          <DialogFooter className="p-6 bg-white border-t flex gap-4">
+            <Button onClick={() => selectedRecord && generatePDF(selectedRecord)} className="flex-1 rounded-xl h-12 bg-blue-600 font-black uppercase">
+              Download PDF
+            </Button>
+            <Button variant="outline" onClick={() => setSelectedRecord(null)} className="flex-1 rounded-xl h-12">
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Tab Switcher */}
       <div className="flex justify-center">
         <div className="bg-slate-100 p-1 rounded-2xl flex gap-1">
@@ -454,7 +593,19 @@ export function CheckingDashboard() {
             {/* History Filters */}
             <Card className="border-none shadow-xl shadow-slate-100 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Recherche (Car / Nom)</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input 
+                        placeholder="Ex: DBS-001" 
+                        value={searchHistoryQuery}
+                        onChange={(e) => setSearchHistoryQuery(e.target.value)}
+                        className="h-12 pl-10 rounded-xl bg-slate-50 border-none font-bold" 
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Du</Label>
                     <Input 
@@ -479,7 +630,7 @@ export function CheckingDashboard() {
                     className="h-12 rounded-xl bg-slate-900 text-white font-black uppercase text-[10px] tracking-widest"
                   >
                     {loadingHistory ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
-                    Filtrer l'historique
+                    Actualiser
                   </Button>
                 </div>
               </CardContent>
@@ -492,8 +643,8 @@ export function CheckingDashboard() {
                   <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
                   <p className="font-bold uppercase text-[10px] tracking-widest">Chargement de l'historique...</p>
                 </div>
-              ) : history.length > 0 ? (
-                history.map((record) => (
+              ) : filteredHistory.length > 0 ? (
+                filteredHistory.map((record) => (
                   <Card key={record.id} className="border-none shadow-lg shadow-slate-100 rounded-3xl overflow-hidden hover:shadow-xl transition-shadow group">
                     <CardContent className="p-0">
                       <div className="flex flex-col md:flex-row md:items-center">
@@ -523,6 +674,7 @@ export function CheckingDashboard() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
+                            onClick={() => setSelectedRecord(record)}
                             className="rounded-full bg-slate-100 hover:bg-blue-100 hover:text-blue-600"
                             title="Voir les détails"
                           >

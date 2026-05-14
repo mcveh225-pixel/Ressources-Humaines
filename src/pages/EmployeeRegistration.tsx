@@ -27,6 +27,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserRole } from '@/types';
+import { GARES } from '@/constants';
 
 export default function EmployeeRegistration() {
   const navigate = useNavigate();
@@ -39,7 +40,8 @@ export default function EmployeeRegistration() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: UserRole.CHAUFFEUR
+    role: UserRole.CHAUFFEUR,
+    gare_id: ''
   });
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -61,6 +63,7 @@ export default function EmployeeRegistration() {
             role: formData.role,
             matricule: formData.matricule,
             phone: formData.phone,
+            gare_id: formData.gare_id
           }
         }
       });
@@ -75,7 +78,8 @@ export default function EmployeeRegistration() {
             full_name: formData.fullName,
             role: formData.role,
             matricule: formData.matricule,
-            phone: formData.phone
+            phone: formData.phone,
+            gare_id: formData.gare_id
           })
           .eq('id', data.user.id);
 
@@ -242,22 +246,42 @@ export default function EmployeeRegistration() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Poste occupé</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({...formData, role: value as UserRole})}
-                >
-                  <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900">
-                    <SelectValue placeholder="Choisir un poste" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-none shadow-xl">
-                    <SelectItem value={UserRole.CHAUFFEUR} className="font-bold py-3">Chauffeur</SelectItem>
-                    <SelectItem value={UserRole.POMPISTE} className="font-bold py-3">Pompiste</SelectItem>
-                    <SelectItem value={UserRole.SERVICE_TECHNIQUE} className="font-bold py-3">Service Technique</SelectItem>
-                    <SelectItem value={UserRole.CHARGE_DE_CLIENTELE} className="font-bold py-3">Chargé de Clientèle</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Poste occupé</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => setFormData({...formData, role: value as UserRole})}
+                  >
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900">
+                      <SelectValue placeholder="Choisir un poste" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                      <SelectItem value={UserRole.CHAUFFEUR} className="font-bold py-3">Chauffeur</SelectItem>
+                      <SelectItem value={UserRole.POMPISTE} className="font-bold py-3">Pompiste</SelectItem>
+                      <SelectItem value={UserRole.SERVICE_TECHNIQUE} className="font-bold py-3">Service Technique</SelectItem>
+                      <SelectItem value={UserRole.GUICHETIER} className="font-bold py-3">Guichetier / Clientèle</SelectItem>
+                      <SelectItem value={UserRole.MECANICIEN || 'MECANICIEN'} className="font-bold py-3">Mécanicien</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Gare d'attache</Label>
+                  <Select
+                    value={formData.gare_id}
+                    onValueChange={(value) => setFormData({...formData, gare_id: value})}
+                  >
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-slate-900">
+                      <SelectValue placeholder="Votre gare DBS" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                      {GARES.map(gare => (
+                        <SelectItem key={gare.id} value={gare.id} className="font-bold py-3">{gare.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="md:col-span-2 pt-6">

@@ -34,6 +34,7 @@ export interface UserProfile {
   role: UserRole;
   gareId?: string;
   avatarUrl?: string;
+  photo_url?: string;
   matricule?: string;
   phone?: string;
 }
